@@ -15,6 +15,8 @@ class views_field_view_handler_field_view extends views_handler_field {
     parent::options_form($form, $form_state);
 
     $options = drupal_map_assoc(array_keys(views_get_all_views()));
+    unset($options[$this->view->name]);
+
     $form['view'] = array(
       '#type' => 'select',
       '#title' => t('View'),
@@ -51,21 +53,31 @@ class views_field_view_handler_field_view extends views_handler_field {
   }
 
   function render($values) {
+    static $running = array();
     if ($this->options['view']) {
-      $args = array();
-      $args[] = $this->options['view'];
-      $args[] = $this->options['display'];
+      // Protect against the evil / recursion.
+      if (empty($running[$this->options['view']][$this->options['display']])) {
+        $running[$this->options['view']][$this->options['display']] = TRUE;
+        $args = array();
+        $args[] = $this->options['view'];
+        $args[] = $this->options['display'];
 
-      foreach (explode(',', $this->options['arguments']) as $argument) {
-        $alter = array(
-          'text' => $argument,
-        );
-        $tokens = $this->get_render_tokens($alter);
-        $value = $this->render_altered($alter, $tokens);
-        $args[] = $value;
+        foreach (explode(',', $this->options['arguments']) as $argument) {
+          $alter = array(
+            'text' => $argument,
+          );
+          $tokens = $this->get_render_tokens($alter);
+          $value = $this->render_altered($alter, $tokens);
+          $args[] = $value;
+        }
+
+        $output = call_user_func_array('views_embed_view', $args);
+        $running[$this->options['view']][$this->options['display']] = FALSE;
       }
-
-      return call_user_func_array('views_embed_view', $args);
+      else {
+        $output = t('Recursion, stop!');
+      }
+      return $output;
     }
   }
 }
