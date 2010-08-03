@@ -1,0 +1,4 @@
+;$Id$
+name = views_field_view
+  description = 'Embeds a view into a view as field'
+core = 6.x
