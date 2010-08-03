@@ -56,7 +56,8 @@ class views_field_view_handler_field_view extends views_handler_field {
     static $running = array();
     if ($this->options['view']) {
       // Protect against the evil / recursion.
-      if (empty($running[$this->options['view']][$this->options['display']])) {
+      // Set the variable for yourself, this is not for the normal "user".
+      if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $args = array();
         $args[] = $this->options['view'];
