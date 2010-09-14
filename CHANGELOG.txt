@@ -1,2 +1,3 @@
 o Take this recursion!
 o The evil found a loophole.
+o #903540 by voxpelli: Improve the .info file.
