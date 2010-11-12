@@ -16,3 +16,67 @@ function views_field_view_views_api() {
     'api' => 2.0,
   );
 }
+
+/**
+ * Implementation of hook_views_query_alter();
+ */
+function views_field_view_views_query_alter(&$view, &$query) {
+  if ($clauses = views_field_view_static_condition_cache()) {
+    foreach ($clauses as $clause_name => $clause) {
+      $sql = ' IN (';
+      $i = 0;
+      foreach ($clause['arguments'] as $argument) {
+        // TODO: It would be great if this were a bit smarter
+        // and use the argument handler to build the sql.
+
+        // This might be irrelevant because any field doing
+        // something non-standard would probably not work anyway.
+        if ($i > 0) {
+          $sql .= ', ';
+        }
+        $i++;
+        if (is_numeric($argument)) {
+          $sql .= '%n';
+        }
+        elseif (is_numeric($argument)) {
+          $sql .= "'%s'";
+        }
+        else {
+          continue;
+        }
+      }
+    }
+    $sql .= ')';
+    $query->add_where(0, $clause['table_name'] . '.' . $clause['field_alias'] . $sql, $clause['arguments']);
+  }
+}
+
+/**
+ * Store clauses to be added to the view to dynamically aggregate argument results.
+ *
+ * @param $clause
+ *   A multidimensional array of
+ * @param $reset
+ *   If true, reset's the clauses to ensure that we don't interfere with other views.
+ *
+ * @return
+ *   If clauses exist, a multidimensional array of clauses, else FALSE.
+ */
+function views_field_view_static_condition_cache($clause = FALSE, $reset = FALSE) {
+  static $stored_clauses = FALSE;
+  if ($reset) {
+    $stored_clauses = FALSE;
+  }
+  if ($clause != FALSE) {
+    if (!is_array($stored_clauses)) {
+      $stored_clauses = array();
+    }
+    $stored_clauses = array_merge_recursive($stored_clauses, $clause);
+  }
+  // Once a read has been performed, destroy the cache.
+  if ($clause == FALSE) {
+    $return = $stored_clauses;
+    $stored_clauses = FALSE;
+    return $return;
+  }
+}
