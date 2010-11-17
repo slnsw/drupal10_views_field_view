@@ -38,11 +38,8 @@ function views_field_view_views_query_alter(&$view, &$query) {
         if (is_numeric($argument)) {
           $sql .= '%n';
         }
-        elseif (is_numeric($argument)) {
-          $sql .= "'%s'";
-        }
         else {
-          continue;
+          $sql .= "'%s'";
         }
       }
     }
