@@ -11,6 +11,10 @@ function views_field_view_views_data_alter(&$data) {
     'field' => array(
       'handler' => 'views_field_view_handler_field_view',
     ),
+    'area' => array(
+      'help' => t('Embed a view in an Area, such as Header, Footer, Empty Text.'),
+      'handler' => 'views_field_view_handler_field_view',
+    ),
   );
 }
 
