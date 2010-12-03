@@ -140,7 +140,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         $configured_argument = array_shift($configured_arguments);
         // To be able to later split up our results among the appropriate rows,
         // we need to add whatever argument fields we're using to the query.
-        $argument_ids[$child_argument_name] = $child_view->add_item($child_view_display, 'field', $configured_argument['table'], $configured_argument['field']);
+        $argument_ids[$child_argument_name] = $child_view->add_item($child_view_display, 'field', $configured_argument['table'], $configured_argument['field'], array('exclude' => TRUE));
         $clause[$child_argument_name] = array(
           'table_name' => $configured_argument['table'],
           'field_alias' => $configured_argument['field'],
