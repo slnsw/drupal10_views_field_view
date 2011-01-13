@@ -70,8 +70,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       );
       $form['query_aggregation'] = array(
         '#title' => t('Aggregate queries'),
-        // TODO: Improve this help text.
-        '#description' => t('Views Field View can attempt to aggregate your queries to prevent Views from running a separate query for each instance of this field.  This option attempts to aggregate these queries.  This may only work on simple views and will not support default arguments as one might expect.') . $form['alter']['help']['#prefix'],
+        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.  This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).  This may only work on simple views, please test thoroughly.') . $form['alter']['help']['#prefix'],
         '#type' => 'checkbox',
         '#default_value' => $this->options['query_aggregation'],
       );
@@ -131,8 +130,14 @@ class views_field_view_handler_field_view extends views_handler_field {
       // Set the appropriate display.
       $child_view->access($child_view_display);
 
-      // Find the arguments on the child view that we're going to need to use.
-      $configured_arguments = $child_view->display[$child_view_display]->display_options['arguments'];
+      // Find the arguments on the child view that we're going to need if the arguments have been overridden.
+      if (isset($child_view->display[$child_view_display]->display_options['arguments'])) {
+        $configured_arguments = $child_view->display[$child_view_display]->display_options['arguments'];
+      }
+      // If the arguments have not been overridden, retrieve them from the default.
+      else {
+        $configured_arguments = $child_view->display['default']->display_options['arguments'];
+      }
       $argument_ids = array();
       foreach($this->child_arguments as $child_argument_name => $child_argument) {
         // Work with the arguments on the child view in the order they are
@@ -150,6 +155,9 @@ class views_field_view_handler_field_view extends views_handler_field {
       }
       // The child view may have been limited but our result set here should not be.
       if (isset($child_view->pager['items_per_page'])) {
+        // TODO: set the limit on the child to the limit on the
+        // child * the limit on the parent, that's the maxiumum
+        // number of results we should ever pull.
         $child_view->pager['items_per_page'] = 0;
       }
       $child_view->execute();
