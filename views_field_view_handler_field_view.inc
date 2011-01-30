@@ -70,7 +70,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       );
       $form['query_aggregation'] = array(
         '#title' => t('Aggregate queries'),
-        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.  This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).  This may only work on simple views, please test thoroughly.') . $form['alter']['help']['#prefix'],
+        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.  This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).  <strong>Default arguments are currently unsupported</strong>.  All arguments must be set to display all values if the argument is not present.  This may only work on simple views, please test thoroughly.') . $form['alter']['help']['#prefix'],
         '#type' => 'checkbox',
         '#default_value' => $this->options['query_aggregation'],
       );
@@ -104,7 +104,7 @@ class views_field_view_handler_field_view extends views_handler_field {
     // instances into a single query.
     if ($this->options['view'] && $this->options['query_aggregation']) {
       // Note: Unlike render, pre_render will be run exactly once per
-      // view-field (not once for each instance).
+      // views_field_view field (not once for each row).
       $child_view_name = $this->options['view'];
       $child_view_display = $this->options['display'];
 
@@ -129,14 +129,14 @@ class views_field_view_handler_field_view extends views_handler_field {
       $child_view = $this->child_view;
       // Set the appropriate display.
       $child_view->access($child_view_display);
-
       // Find the arguments on the child view that we're going to need if the arguments have been overridden.
-      if (isset($child_view->display[$child_view_display]->display_options['arguments'])) {
-        $configured_arguments = $child_view->display[$child_view_display]->display_options['arguments'];
-      }
-      // If the arguments have not been overridden, retrieve them from the default.
-      else {
-        $configured_arguments = $child_view->display['default']->display_options['arguments'];
+      foreach ($child_view->display['default']->display_options['arguments'] as $argument_name => $argument_value) {
+        if(isset($child_view->display[$child_view_display]->display_options['arguments'][$argument_name])) {
+          $configured_arguments[$argument_name] = $child_view->display[$child_view_display]->display_options['arguments'][$argument_name];
+        }
+        else {
+          $configured_arguments[$argument_name] = $child_view->display['default']->display_options['arguments'][$argument_name];
+        }
       }
       $argument_ids = array();
       foreach($this->child_arguments as $child_argument_name => $child_argument) {
@@ -146,20 +146,35 @@ class views_field_view_handler_field_view extends views_handler_field {
         // To be able to later split up our results among the appropriate rows,
         // we need to add whatever argument fields we're using to the query.
         $argument_ids[$child_argument_name] = $child_view->add_item($child_view_display, 'field', $configured_argument['table'], $configured_argument['field'], array('exclude' => TRUE));
-        $clause[$child_argument_name] = array(
-          'table_name' => $configured_argument['table'],
-          'field_alias' => $configured_argument['field'],
-          'arguments' => $child_argument['values'],
-        );
-        views_field_view_static_condition_cache($clause);
+        // Initialize the query object so that we have it to alter.
+        $child_view->init_query();
+        $sql = ' IN (';
+        $i = 0;
+        foreach ($child_argument['values'] as $argument) {
+          // TODO: It would be great if this were a bit smarter and if we could
+          // use the argument handler to build the sql.  However, this might be
+          // irrelevant because any field doing something non-standard would
+          // probably not work anyway.
+          if ($i > 0) {
+            $sql .= ', ';
+          }
+          $i++;
+          if (is_numeric($argument)) {
+            $sql .= '%n';
+          }
+          else {
+            $sql .= "'%s'";
+          }
+        }
+        $sql .= ')';
+        // Add the WHERE IN clause to this query.
+        $child_view->query->add_where(0, $configured_argument['table'] . '.' . $configured_argument['field'] . $sql, $child_argument['values']);
       }
       // The child view may have been limited but our result set here should not be.
       if (isset($child_view->pager['items_per_page'])) {
-        // TODO: set the limit on the child to the limit on the
-        // child * the limit on the parent, that's the maxiumum
-        // number of results we should ever pull.
         $child_view->pager['items_per_page'] = 0;
       }
+      // Execute the query to retrieve the results.
       $child_view->execute();
       // Now that the query has run, we need to get the field alias for each argument field
       // so that it can be identified later.
@@ -181,7 +196,7 @@ class views_field_view_handler_field_view extends views_handler_field {
           // Check each argument that we care about to ensure that it matches.
           foreach($this->child_arguments as $child_argument_field_alias => $child_argument) {
             // If one of our arguments does not match the argument of this field, do not add it to this row.
-            if ($value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
+            if (isset($value->$child_argument_field_alias) && $value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
               $matching_item = FALSE;
             }
           }
@@ -210,10 +225,10 @@ class views_field_view_handler_field_view extends views_handler_field {
 
   function render($values) {
     static $running = array();
-    if ($this->options['view'] && !$this->options['query_aggregation']) {
-      // Protect against the evil / recursion.
-      // Set the variable for yourself, this is not for the normal "user".
-      if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
+    // Protect against the evil / recursion.
+    // Set the variable for yourself, this is not for the normal "user".
+    if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
+      if ($this->options['view'] && !$this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $args = array();
         $args[] = $this->options['view'];
@@ -227,19 +242,10 @@ class views_field_view_handler_field_view extends views_handler_field {
           $value = $this->render_altered($alter, $tokens);
           $args[] = $value;
         }
-
         $output = call_user_func_array('views_embed_view', $args);
         $running[$this->options['view']][$this->options['display']] = FALSE;
       }
-      else {
-        $output = t('Recursion, stop!');
-      }
-      return $output;
-    }
-    else if ($this->options['view'] && $this->options['query_aggregation']) {
-      // Protect against the evil / recursion.
-      // Set the variable for yourself, this is not for the normal "user".
-      if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
+      else if ($this->options['view'] && $this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $child_view = $this->child_view;
         $results =  $this->child_view_results[$values->{$this->view->base_field}];
@@ -252,10 +258,10 @@ class views_field_view_handler_field_view extends views_handler_field {
         $output = $child_view->render();
         $running[$this->options['view']][$this->options['display']] = FALSE;
       }
-      else {
-        $output = t('Recursion, stop!');
-      }
-      return $output;
     }
+    else {
+      $output = t('Recursion, stop!');
+    }
+    return $output;
   }
 }
