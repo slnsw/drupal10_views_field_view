@@ -70,7 +70,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       );
       $form['query_aggregation'] = array(
         '#title' => t('Aggregate queries'),
-        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.  This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).  <strong>Default arguments are currently unsupported</strong>.  All arguments must be set to display all values if the argument is not present.  This may only work on simple views, please test thoroughly.') . $form['alter']['help']['#prefix'],
+        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.  This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).  <strong>Currently child views must be configured to "display all values" if no argument is present and query aggregation is enabled.</strong>.  This may only work on simple views, please test thoroughly.') . $form['alter']['help']['#prefix'],
         '#type' => 'checkbox',
         '#default_value' => $this->options['query_aggregation'],
       );
@@ -84,6 +84,7 @@ class views_field_view_handler_field_view extends views_handler_field {
     }
     $form['alter']['#access'] = FALSE;
   }
+
   function query() {
     $this->ensure_my_table();
     $this->add_additional_fields();
@@ -123,103 +124,108 @@ class views_field_view_handler_field_view extends views_handler_field {
           }
         }
       }
-
-      // Cache the child_view in this object to minize our calls to views_get_view.
-      $this->child_view = views_get_view($child_view_name);
-      $child_view = $this->child_view;
-      // Set the appropriate display.
-      $child_view->access($child_view_display);
-      // Find the arguments on the child view that we're going to need if the arguments have been overridden.
-      foreach ($child_view->display['default']->display_options['arguments'] as $argument_name => $argument_value) {
-        if(isset($child_view->display[$child_view_display]->display_options['arguments'][$argument_name])) {
-          $configured_arguments[$argument_name] = $child_view->display[$child_view_display]->display_options['arguments'][$argument_name];
-        }
-        else {
-          $configured_arguments[$argument_name] = $child_view->display['default']->display_options['arguments'][$argument_name];
-        }
-      }
-      $argument_ids = array();
-      foreach($this->child_arguments as $child_argument_name => $child_argument) {
-        // Work with the arguments on the child view in the order they are
-        // specified in our views_field_view field settings.
-        $configured_argument = array_shift($configured_arguments);
-        // To be able to later split up our results among the appropriate rows,
-        // we need to add whatever argument fields we're using to the query.
-        $argument_ids[$child_argument_name] = $child_view->add_item($child_view_display, 'field', $configured_argument['table'], $configured_argument['field'], array('exclude' => TRUE));
-        // Initialize the query object so that we have it to alter.
-        $child_view->init_query();
-        $sql = ' IN (';
-        $i = 0;
-        foreach ($child_argument['values'] as $argument) {
-          // TODO: It would be great if this were a bit smarter and if we could
-          // use the argument handler to build the sql.  However, this might be
-          // irrelevant because any field doing something non-standard would
-          // probably not work anyway.
-          if ($i > 0) {
-            $sql .= ', ';
-          }
-          $i++;
-          if (is_numeric($argument)) {
-            $sql .= '%n';
+      // If we don't have child arguments we should not try to do any of our magic.
+      if (count($this->child_arguments)) {
+        // Cache the child_view in this object to minize our calls to views_get_view.
+        $this->child_view = views_get_view($child_view_name);
+        $child_view = $this->child_view;
+        // Set the appropriate display.
+        $child_view->access($child_view_display);
+        // Find the arguments on the child view that we're going to need if the arguments have been overridden.
+        foreach ($child_view->display['default']->display_options['arguments'] as $argument_name => $argument_value) {
+          if(isset($child_view->display[$child_view_display]->display_options['arguments'][$argument_name])) {
+            $configured_arguments[$argument_name] = $child_view->display[$child_view_display]->display_options['arguments'][$argument_name];
           }
           else {
-            $sql .= "'%s'";
+            $configured_arguments[$argument_name] = $child_view->display['default']->display_options['arguments'][$argument_name];
           }
         }
-        $sql .= ')';
-        // Add the WHERE IN clause to this query.
-        $child_view->query->add_where(0, $configured_argument['table'] . '.' . $configured_argument['field'] . $sql, $child_argument['values']);
-      }
-      // The child view may have been limited but our result set here should not be.
-      if (isset($child_view->pager['items_per_page'])) {
-        $child_view->pager['items_per_page'] = 0;
-      }
-      // Execute the query to retrieve the results.
-      $child_view->execute();
-      // Now that the query has run, we need to get the field alias for each argument field
-      // so that it can be identified later.
-      foreach ($argument_ids as $child_argument_name => $argument_id) {
-        $this->child_arguments[$child_argument_name]['child_view_field_alias'] = $child_view->field[$argument_id]->field_alias;
-      }
-      $results = $child_view->result;
-
-      // Finally: Cache the results so that they're easily accessible for the render function.
-      // Loop through the results from the main view so that we can cache the results relevant to each row.
-      foreach ($values as $value) {
-        // Add an element to the child_view_results array for each of the rows keyed by this view's base_field.
-        $this->child_view_results[$value->{$this->view->base_field}] = array();
-        $child_view_result_row =& $this->child_view_results[$value->{$this->view->base_field}];
-        // Loop through the actual result set looking for matches to these arguments.
-        foreach ($results as $result) {
-          // Assume that we have a matching item until we know that we don't.
-          $matching_item = TRUE;
-          // Check each argument that we care about to ensure that it matches.
-          foreach($this->child_arguments as $child_argument_field_alias => $child_argument) {
-            // If one of our arguments does not match the argument of this field, do not add it to this row.
-            if (isset($value->$child_argument_field_alias) && $value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
-              $matching_item = FALSE;
+        $argument_ids = array();
+        foreach($this->child_arguments as $child_argument_name => $child_argument) {
+          // Work with the arguments on the child view in the order they are
+          // specified in our views_field_view field settings.
+          $configured_argument = array_shift($configured_arguments);
+          // To be able to later split up our results among the appropriate rows,
+          // we need to add whatever argument fields we're using to the query.
+          $argument_ids[$child_argument_name] = $child_view->add_item($child_view_display, 'field', $configured_argument['table'], $configured_argument['field'], array('exclude' => TRUE));
+          // Initialize the query object so that we have it to alter.
+          // The child view may have been limited but our result set here should not be.
+          if (isset($child_view->pager['items_per_page'])) {
+            $child_view->pager['items_per_page'] = 0;
+          }
+          $child_view->build();
+          $sql = ' IN (';
+          $i = 0;
+          foreach ($child_argument['values'] as $argument) {
+            // TODO: It would be great if this were a bit smarter and if we could
+            // use the argument handler to build the sql.  However, this might be
+            // irrelevant because any field doing something non-standard would
+            // probably not work anyway.
+            if ($i > 0) {
+              $sql .= ', ';
+            }
+            $i++;
+            if (is_numeric($argument)) {
+              $sql .= '%n';
+            }
+            else {
+              $sql .= "'%s'";
             }
           }
-          if ($matching_item) {
-            $child_view_result_row[] = $result;
-          }
+          $sql .= ')';
+          // Add the WHERE IN clause to this query.
+          $child_view->query->add_where(0, $configured_argument['table'] . '.' . $configured_argument['field'] . $sql, $child_argument['values']);
         }
-        // Make a best effort attempt at paging.
-        if (isset($this->child_view->pager['items_per_page'])) {
-          $item_limit = $this->child_view->pager['items_per_page'];
-          // If the item limit exists but is set to zero, do not split up the results.
-          if ($item_limit != 0) {
-            $results = array_chunk($results, $item_limit);
-            $offset = (isset($this->child_view->pager['offset']) ? $this->child_view->pager['offset'] : 0);
-            $results = $results[$offset];
-          }
+        $child_view->build_info['query'] = $child_view->query->query();
+        $child_view->build_info['count_query'] = $child_view->query->query(TRUE);
+        $child_view->build_info['query_args'] = $child_view->query->get_where_args();
+        // Execute the query to retrieve the results.
+        $child_view->execute();
+        // Now that the query has run, we need to get the field alias for each argument field
+        // so that it can be identified later.
+        foreach ($argument_ids as $child_argument_name => $argument_id) {
+          $this->child_arguments[$child_argument_name]['child_view_field_alias'] = $child_view->field[$argument_id]->field_alias;
         }
-        unset($child_view_result_row);
+        $results = $child_view->result;
+
+        // Finally: Cache the results so that they're easily accessible for the render function.
+        // Loop through the results from the main view so that we can cache the results relevant to each row.
+        foreach ($values as $value) {
+          // Add an element to the child_view_results array for each of the rows keyed by this view's base_field.
+          $this->child_view_results[$value->{$this->view->base_field}] = array();
+          $child_view_result_row =& $this->child_view_results[$value->{$this->view->base_field}];
+          // Loop through the actual result set looking for matches to these arguments.
+          foreach ($results as $result) {
+            // Assume that we have a matching item until we know that we don't.
+            $matching_item = TRUE;
+            // Check each argument that we care about to ensure that it matches.
+            foreach($this->child_arguments as $child_argument_field_alias => $child_argument) {
+              // If one of our arguments does not match the argument of this field, do not add it to this row.
+              if (isset($value->$child_argument_field_alias) && $value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
+                $matching_item = FALSE;
+              }
+            }
+            if ($matching_item) {
+              $child_view_result_row[] = $result;
+            }
+          }
+          // Make a best effort attempt at paging.
+          if (isset($this->child_view->pager['items_per_page'])) {
+            $item_limit = $this->child_view->pager['items_per_page'];
+            // If the item limit exists but is set to zero, do not split up the results.
+            if ($item_limit != 0) {
+              $results = array_chunk($results, $item_limit);
+              $offset = (isset($this->child_view->pager['offset']) ? $this->child_view->pager['offset'] : 0);
+              $results = $results[$offset];
+            }
+          }
+          unset($child_view_result_row);
+        }
+        // We have essentially built and executed the child view member of this view.
+        // Set it accordingly so that it is not rebuilt during the rendering of each row below.
+        $this->child_view->built = TRUE;
+        $this->child_view->executed = TRUE;
       }
-      // We have essentially built and executed the child view member of this view.
-      // Set it accordingly so that it is not rebuilt during the rendering of each row below.
-      $this->child_view->built = TRUE;
-      $this->child_view->executed = TRUE;
     }
   }
 
@@ -245,7 +251,9 @@ class views_field_view_handler_field_view extends views_handler_field {
         $output = call_user_func_array('views_embed_view', $args);
         $running[$this->options['view']][$this->options['display']] = FALSE;
       }
-      else if ($this->options['view'] && $this->options['query_aggregation']) {
+      // Verify we have a child view (if there were no arguments specified we
+      // won't have one) and that query aggregation was enabled.
+      else if ($this->child_view && $this->options['view'] && $this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $child_view = $this->child_view;
         $results =  $this->child_view_results[$values->{$this->view->base_field}];
