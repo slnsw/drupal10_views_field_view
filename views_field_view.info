@@ -1,4 +1,3 @@
-;$Id$
 name = Views Field View
 description = 'Embeds a view into a view as field'
 package = Views

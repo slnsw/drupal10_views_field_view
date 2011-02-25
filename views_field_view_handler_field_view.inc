@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class views_field_view_handler_field_view extends views_handler_field {
 
