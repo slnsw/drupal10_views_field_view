@@ -1,8 +1,13 @@
 <?php
 
 /**
-* Implements hook_views_data_alter().
-*/
+ * @file
+ * Views integration for the views_field_view module.
+ */
+
+/**
+ * Implements hook_views_data_alter().
+ */
 function views_field_view_views_data_alter(&$data) {
   $data['views']['view'] = array(
     'title' => t('View'),
@@ -13,19 +18,6 @@ function views_field_view_views_data_alter(&$data) {
     'area' => array(
       'help' => t('Embed a view in an Area, such as Header, Footer, Empty Text.'),
       'handler' => 'views_field_view_handler_field_view',
-    ),
-  );
-}
-
-/**
- * Implements hook_views_handlers().
- */
-function views_field_view_views_handlers() {
-  return array(
-    'handlers' => array(
-      'views_field_view_handler_field_view' => array(
-        'parent' => 'views_handler_field',
-      ),
     ),
   );
 }

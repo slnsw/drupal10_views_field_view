@@ -4,7 +4,7 @@ class views_field_view_handler_field_view extends views_handler_field {
 
   /**
    * If query aggregation is used, all of the arguments for the child view.
-   * 
+   *
    * This is a multidimensional array containing field_aliases for the argument's fields
    * and containing a linear array of all of the results to be used as arguments in various fields.
    */
@@ -37,7 +37,7 @@ class views_field_view_handler_field_view extends views_handler_field {
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
-    $options = drupal_map_assoc(array_keys(views_get_all_views()));
+    $options = drupal_map_assoc(array_keys(views_get_enabled_views()));
     unset($options[$this->view->name]);
 
     $form['view'] = array(
@@ -45,7 +45,13 @@ class views_field_view_handler_field_view extends views_handler_field {
       '#title' => t('View'),
       '#default_value' => $this->options['view'],
       '#options' => $options,
+      '#ajax' => array(
+        'path' => views_ui_build_form_url($form_state),
+      ),
+      '#submit' => array('views_ui_config_item_form_submit_temporary'),
+      '#executes_submit_callback' => TRUE,
     );
+
     if ($this->options['view']) {
       $view = views_get_view($this->options['view']);
 
@@ -74,11 +80,9 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#default_value' => $this->options['query_aggregation'],
       );
       // Ensure we're working with a SQL view.
-      if (views_api_version() == '3.0') {
-        $views_data = views_fetch_data($view->base_table);
-        if ($views_data['table']['base']['query class'] == 'views_query') {
-          $form['query_aggregation']['#disabled'] = TRUE;
-        }
+      $views_data = views_fetch_data($view->base_table);
+      if ($views_data['table']['base']['query class'] == 'views_query') {
+        $form['query_aggregation']['#disabled'] = TRUE;
       }
     }
     $form['alter']['#access'] = FALSE;
@@ -98,8 +102,7 @@ class views_field_view_handler_field_view extends views_handler_field {
    * @param $values
    *   An array of all objects returned from the query.
    */
-  function pre_render($values) {
-
+  function pre_render(&$values) {
     // Only act if we are attempting to aggregate all of the field
     // instances into a single query.
     if ($this->options['view'] && $this->options['query_aggregation']) {

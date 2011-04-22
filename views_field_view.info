@@ -2,4 +2,5 @@ name = Views Field View
 description = 'Embeds a view into a view as field'
 package = Views
 dependencies[] = views
-core = 6.x
+core = 7.x
+files[] = views_field_view_handler_field_view.inc
