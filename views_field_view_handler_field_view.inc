@@ -158,27 +158,8 @@ class views_field_view_handler_field_view extends views_handler_field {
             $child_view->pager['items_per_page'] = 0;
           }
           $child_view->build();
-          $sql = ' IN (';
-          $i = 0;
-          foreach ($child_argument['values'] as $argument) {
-            // TODO: It would be great if this were a bit smarter and if we could
-            // use the argument handler to build the sql.  However, this might be
-            // irrelevant because any field doing something non-standard would
-            // probably not work anyway.
-            if ($i > 0) {
-              $sql .= ', ';
-            }
-            $i++;
-            if (is_numeric($argument)) {
-              $sql .= '%n';
-            }
-            else {
-              $sql .= "'%s'";
-            }
-          }
-          $sql .= ')';
           // Add the WHERE IN clause to this query.
-          $child_view->query->add_where(0, $configured_argument['table'] . '.' . $configured_argument['field'] . $sql, $child_argument['values']);
+          $child_view->query->add_where(0, $configured_argument['table'] . '.' . $configured_argument['field'], $child_argument['values']);
         }
         $child_view->build_info['query'] = $child_view->query->query();
         $child_view->build_info['count_query'] = $child_view->query->query(TRUE);
