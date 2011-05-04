@@ -73,6 +73,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#type' => 'textfield',
         '#default_value' => $this->options['arguments'],
       );
+      // @todo: Show availible tokens.
+
       $form['query_aggregation'] = array(
         '#title' => t('Aggregate queries'),
         '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.  This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).  <strong>Currently child views must be configured to "display all values" if no argument is present and query aggregation is enabled.</strong>.  This may only work on simple views, please test thoroughly.') . $form['alter']['help']['#prefix'],
