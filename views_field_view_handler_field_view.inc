@@ -38,7 +38,6 @@ class views_field_view_handler_field_view extends views_handler_field {
     parent::options_form($form, $form_state);
 
     $options = drupal_map_assoc(array_keys(views_get_enabled_views()));
-    unset($options[$this->view->name]);
 
     $form['view'] = array(
       '#type' => 'select',
@@ -57,7 +56,10 @@ class views_field_view_handler_field_view extends views_handler_field {
 
       $options = array();
       foreach ($view->display as $name => $display) {
-        $options[$name] = $display->display_title;
+        // Allow to embed a different display as the current one.
+        if ($this->options['view'] != $this->view->name || ($this->view->current_display != $name)) {
+          $options[$name] = $display->display_title;
+        }
       }
 
       $form['display'] = array(
