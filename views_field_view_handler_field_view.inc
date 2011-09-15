@@ -227,13 +227,16 @@ class views_field_view_handler_field_view extends views_handler_field {
         $args[] = $this->options['view'];
         $args[] = $this->options['display'];
 
-        foreach (explode(',', $this->options['arguments']) as $argument) {
-          $alter = array(
-            'text' => $argument,
-          );
-          $tokens = $this->get_render_tokens($alter);
-          $value = $this->render_altered($alter, $tokens);
-          $args[] = $value;
+        // Only perform this loop if there are actually arguments present
+        if (!empty($this->options['arguments'])) {
+          foreach (explode(',', $this->options['arguments']) as $argument) {
+            $alter = array(
+              'text' => $argument,
+            );
+            $tokens = $this->get_render_tokens($alter);
+            $value = $this->render_altered($alter, $tokens);
+            $args[] = $value;
+          }
         }
         $output = call_user_func_array('views_embed_view', $args);
         $running[$this->options['view']][$this->options['display']] = FALSE;
