@@ -1,7 +1,11 @@
 <?php
+/**
+ * @file
+ * Views field view field handler class.
+ * 
+ */
 
 class views_field_view_handler_field_view extends views_handler_field {
-
   /**
    * If query aggregation is used, all of the arguments for the child view.
    *
@@ -22,7 +26,7 @@ class views_field_view_handler_field_view extends views_handler_field {
    * Note, it should never contain arguments or results because they will be
    * injected into it for rendering.
    */
-  public $child_view = false;
+  public $child_view = FALSE;
 
   function option_definition() {
     $options = parent::option_definition();
@@ -68,18 +72,26 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#default_value' => $this->options['display'],
         '#options' => $options,
       );
-
       $form['arguments'] = array(
         '#title' => t('Arguments'),
-        '#description' => t('Use a comma-seperated list of each argument which should be forwared to the view') . $form['alter']['help']['#prefix'],
+        '#description' => t('Use a comma-seperated list of each argument which should be forwared to the view'),
         '#type' => 'textfield',
         '#default_value' => $this->options['arguments'],
       );
-      // @todo: Show availible tokens.
+      $form['available_tokens'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Replacement patterns'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#value' => $this->get_token_info(),
+      );
 
       $form['query_aggregation'] = array(
         '#title' => t('Aggregate queries'),
-        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.  This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).  <strong>Currently child views must be configured to "display all values" if no argument is present and query aggregation is enabled.</strong>.  This may only work on simple views, please test thoroughly.') . $form['alter']['help']['#prefix'],
+        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries. 
+          This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed). 
+          <strong>Currently child views must be configured to "display all values" if no argument is present and query aggregation is enabled.</strong>. 
+          This may only work on simple views, please test thoroughly.'),
         '#type' => 'checkbox',
         '#default_value' => $this->options['query_aggregation'],
       );
@@ -120,9 +132,10 @@ class views_field_view_handler_field_view extends views_handler_field {
         // Remove the brackets around the token
         $argument = substr($token, 1, -1);
         // Collect all of the values that we intend to use as arguments of our single query.
+        // TODO: Get this to be handled by get_token_values() method too.
         if (isset($this->view->field[$argument]->field_alias)) {
           $field_alias = $this->view->field[$argument]->field_alias;
-          foreach($values as $value) {
+          foreach ($values as $value) {
             if (isset($value->$field_alias)) {
               $this->child_arguments[$field_alias]['argument_name'] = $argument;
               $this->child_arguments[$field_alias]['values'][] = $value->$field_alias;
@@ -139,7 +152,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         $child_view->access($child_view_display);
         // Find the arguments on the child view that we're going to need if the arguments have been overridden.
         foreach ($child_view->display['default']->display_options['arguments'] as $argument_name => $argument_value) {
-          if(isset($child_view->display[$child_view_display]->display_options['arguments'][$argument_name])) {
+          if (isset($child_view->display[$child_view_display]->display_options['arguments'][$argument_name])) {
             $configured_arguments[$argument_name] = $child_view->display[$child_view_display]->display_options['arguments'][$argument_name];
           }
           else {
@@ -147,7 +160,7 @@ class views_field_view_handler_field_view extends views_handler_field {
           }
         }
         $argument_ids = array();
-        foreach($this->child_arguments as $child_argument_name => $child_argument) {
+        foreach ($this->child_arguments as $child_argument_name => $child_argument) {
           // Work with the arguments on the child view in the order they are
           // specified in our views_field_view field settings.
           $configured_argument = array_shift($configured_arguments);
@@ -186,7 +199,7 @@ class views_field_view_handler_field_view extends views_handler_field {
             // Assume that we have a matching item until we know that we don't.
             $matching_item = TRUE;
             // Check each argument that we care about to ensure that it matches.
-            foreach($this->child_arguments as $child_argument_field_alias => $child_argument) {
+            foreach ($this->child_arguments as $child_argument_field_alias => $child_argument) {
               // If one of our arguments does not match the argument of this field, do not add it to this row.
               if (isset($value->$child_argument_field_alias) && $value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
                 $matching_item = FALSE;
@@ -224,30 +237,35 @@ class views_field_view_handler_field_view extends views_handler_field {
       if ($this->options['view'] && !$this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $args = array();
-        $args[] = $this->options['view'];
-        $args[] = $this->options['display'];
-
-        // Only perform this loop if there are actually arguments present
+        // Only perform this loop if there are actually arguments present.
         if (!empty($this->options['arguments'])) {
-          foreach (explode(',', $this->options['arguments']) as $argument) {
-            $alter = array(
-              'text' => $argument,
-            );
-            $tokens = $this->get_render_tokens($alter);
-            $value = $this->render_altered($alter, $tokens);
-            $args[] = $value;
-          }
+          // Create array of tokens.
+          $tokens = explode(',', $this->options['arguments']);
+          $args = $this->get_token_values($tokens, $values, $this->view);
         }
-        $output = call_user_func_array('views_embed_view', $args);
+        // get view etc… and execute.
+        $view = views_get_view($this->options['view']);
+        $view->set_display($this->options['display']);
+        $view->pre_execute($args);
+        $view->execute();
+
+        // If there are no results and hide_empty is set.
+        if (empty($view->result) && $this->options['hide_empty']) {
+          $output = '';
+        }
+        // Else just call render on the view object.
+        else {
+          $output = $view->render();
+        }
+        //$output = call_user_func_array('views_embed_view', $args);
         $running[$this->options['view']][$this->options['display']] = FALSE;
       }
       // Verify we have a child view (if there were no arguments specified we
-      // won't have one) and that query aggregation was enabled.
-      else if ($this->child_view && $this->options['view'] && $this->options['query_aggregation']) {
+      // won't have one), and that query aggregation was enabled.
+      elseif ($this->child_view && $this->options['view'] && $this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $child_view = $this->child_view;
         $results =  $this->child_view_results[$values->{$this->view->base_field}];
-
         // Inject the appropriate result set before rendering the view.
         $child_view->result = $results;
         if (isset($child_view->style_plugin->rendered_fields)) {
@@ -258,8 +276,88 @@ class views_field_view_handler_field_view extends views_handler_field {
       }
     }
     else {
-      $output = t('Recursion, stop!');
+      $output = t("Recursion, stop!");
     }
     return $output;
   }
+  
+  /**
+   * Get raw token values from tokens.
+   * 
+   * @param $tokens
+   *  array of token strings. E.g. explode(',', $this->options['args']);
+   * 
+   * @param $values
+   *  object of row field values, as passed into pre_render or render methods.
+   * 
+   * @param $view
+   *  Full view object to get token values from.
+   * 
+   * @return
+   *  array of raw argument values, returned in the same order as the token were passed in.
+   * 
+   */
+  function get_token_values($tokens, $values, $view) {
+    $args = array();
+    // Add each argument token configured for this view_field.
+    foreach ($tokens as $token) {
+      // Trim whitespace and remove the brackets around the token.
+      $argument = substr(trim($token), 1, -1);
+      // Collect all of the values that we intend to use as arguments of our single query.
+      if (isset($view->field[$argument]->field_alias)) {
+        $field_alias = $view->field[$argument]->field_alias;
+        if (isset($values->{$field_alias})) {
+          $args[] = $values->{$field_alias};
+        }
+      }
+    }
+    return $args;
+  }
+  
+  /**
+   * Get available field tokens, code/logic stolen from views_handler_field.inc.
+   */
+  public function get_token_info() {
+    // Get a list of the available fields and arguments for token replacement.
+    $options = array();
+    foreach ($this->view->display_handler->get_handlers('field') as $field => $handler) {
+      $options[t('Fields')]["[$field]"] = $handler->ui_name();
+      // We only use fields up to (and including) this one.
+      if ($field == $this->options['id']) {
+        break;
+      }
+    }
+    $count = 0; // This lets us prepare the key as we want it printed.
+    foreach ($this->view->display_handler->get_handlers('argument') as $arg => $handler) {
+      $options[t('Arguments')]['%' . ++$count] = t('@argument title', array('@argument' => $handler->ui_name()));
+      $options[t('Arguments')]['!' . $count] = t('@argument input', array('@argument' => $handler->ui_name()));
+    }
+
+    $this->document_self_tokens($options[t('Fields')]);
+
+    // Default text.
+    $output = '<p>' . t('You must add some additional fields to this display before using this field. 
+      These fields may be marked as <em>Exclude from display</em> if you prefer. Note that due to rendering order, 
+      you cannot use fields that come after this field; if you need a field not listed here, rearrange your fields.') . '</p>';
+    // We have some options, so make a list.
+    if (!empty($options)) {
+      $output = '<p>' . t('The following tokens are available for this field. Note that due to rendering order, 
+        you cannot use fields that come after this field; if you need a field not listed here, rearrange your fields.') . '</p>';
+      foreach (array_keys($options) as $type) {
+        if (!empty($options[$type])) {
+          $items = array();
+          foreach ($options[$type] as $key => $value) {
+            $items[] = $key . ' == ' . $value;
+          }
+          $output .= theme('item_list',
+            array(
+              'items' => $items,
+              'type' => $type
+            ));
+        }
+      }
+    }
+    return $output;
+  }
+
 }

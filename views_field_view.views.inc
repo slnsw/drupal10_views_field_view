@@ -11,7 +11,7 @@
 function views_field_view_views_data_alter(&$data) {
   $data['views']['view'] = array(
     'title' => t('View'),
-    'help' => t('Embed a view as field, this can cause slow performance, so enable some caching.'),
+    'help' => t('Embed a view as field. This can cause slow performance, so enable some caching.'),
     'field' => array(
       'handler' => 'views_field_view_handler_field_view',
     ),
