@@ -42,10 +42,18 @@ class views_field_view_handler_field_view extends views_handler_field {
     parent::options_form($form, $form_state);
 
     $options = drupal_map_assoc(array_keys(views_get_enabled_views()));
+    
+    $form['views_field_view'] = array(
+      '#type' => 'fieldset',
+      '#title' => t("View settings"),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
 
     $form['view'] = array(
       '#type' => 'select',
       '#title' => t('View'),
+      '#description' => t('Select a view to embed.'),
       '#default_value' => $this->options['view'],
       '#options' => $options,
       '#ajax' => array(
@@ -53,6 +61,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       ),
       '#submit' => array('views_ui_config_item_form_submit_temporary'),
       '#executes_submit_callback' => TRUE,
+      '#fieldset' => 'views_field_view',
     );
 
     if ($this->options['view']) {
@@ -67,16 +76,19 @@ class views_field_view_handler_field_view extends views_handler_field {
       }
 
       $form['display'] = array(
-        '#title' => t('Display'),
         '#type' => 'select',
+        '#title' => t('Display'),
+        '#description' => t('Select a view display to use.'),
         '#default_value' => $this->options['display'],
         '#options' => $options,
+        '#fieldset' => 'views_field_view',
       );
       $form['arguments'] = array(
         '#title' => t('Arguments'),
-        '#description' => t('Use a comma-seperated list of each argument which should be forwared to the view'),
+        '#description' => t('Use a comma-seperated list of each argument which should be forwared to the view. See below list of available replacement tokens.'),
         '#type' => 'textfield',
         '#default_value' => $this->options['arguments'],
+        '#fieldset' => 'views_field_view',
       );
       $form['available_tokens'] = array(
         '#type' => 'fieldset',
@@ -84,6 +96,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
         '#value' => $this->get_token_info(),
+        '#fieldset' => 'views_field_view',
       );
 
       $form['query_aggregation'] = array(
@@ -94,6 +107,7 @@ class views_field_view_handler_field_view extends views_handler_field {
           This may only work on simple views, please test thoroughly.'),
         '#type' => 'checkbox',
         '#default_value' => $this->options['query_aggregation'],
+        '#fieldset' => 'views_field_view',
       );
       // Ensure we're working with a SQL view.
       $views_data = views_fetch_data($view->base_table);
