@@ -119,7 +119,6 @@ class views_field_view_handler_field_view extends views_handler_field {
   }
 
   function query() {
-    $this->ensure_my_table();
     $this->add_additional_fields();
   }
 
