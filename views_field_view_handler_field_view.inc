@@ -84,8 +84,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#fieldset' => 'views_field_view',
       );
       $form['arguments'] = array(
-        '#title' => t('Arguments'),
-        '#description' => t('Use a comma-seperated list of each argument which should be forwared to the view. See below list of available replacement tokens.'),
+        '#title' => t('Contextual filters'),
+        '#description' => t('Use a comma-seperated list of each contextual filter which should be forwared to the view. See below list of available replacement tokens.'),
         '#type' => 'textfield',
         '#default_value' => $this->options['arguments'],
         '#fieldset' => 'views_field_view',
@@ -103,7 +103,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#title' => t('Aggregate queries'),
         '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries. 
           This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed). 
-          <strong>Currently child views must be configured to "display all values" if no argument is present and query aggregation is enabled.</strong>. 
+          <strong>Currently child views must be configured to "display all values" if no contextual filter is present and query aggregation is enabled.</strong>. 
           This may only work on simple views, please test thoroughly.'),
         '#type' => 'checkbox',
         '#default_value' => $this->options['query_aggregation'],
