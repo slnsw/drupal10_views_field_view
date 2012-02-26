@@ -139,7 +139,6 @@ class views_field_view_handler_field_view extends views_handler_field {
       // views_field_view field (not once for each row).
       $child_view_name = $this->options['view'];
       $child_view_display = $this->options['display'];
-
       // Add each argument token configured for this view_field.
       foreach (explode(',', $this->options['arguments']) as $token) {
         // Remove the brackets around the token
@@ -147,11 +146,26 @@ class views_field_view_handler_field_view extends views_handler_field {
         // Collect all of the values that we intend to use as arguments of our single query.
         // TODO: Get this to be handled by get_token_values() method too.
         if (isset($this->view->field[$argument]->field_alias)) {
-          $field_alias = $this->view->field[$argument]->field_alias;
+          if (isset($this->view->field[$argument]->field_info)) {
+            $field_alias = 'field_' . $this->view->field[$argument]->field;
+          }
+          else {
+            $field_alias = $this->view->field[$argument]->field_alias;
+          }
           foreach ($values as $value) {
             if (isset($value->$field_alias)) {
               $this->child_arguments[$field_alias]['argument_name'] = $argument;
-              $this->child_arguments[$field_alias]['values'][] = $value->$field_alias;
+              if (is_array($value->$field_alias)) {
+                $field_values = array();
+                foreach ($value->$field_alias as $field_item) {
+                  $field_values[] = $field_item['raw']['value'];
+                }
+                $field_value = (count($field_values) > 1) ? $field_values : reset($field_values);
+                $this->child_arguments[$field_alias]['values'][] = $field_value;
+              }
+              else {
+                $this->child_arguments[$field_alias]['values'][] = $value->$field_alias;
+              }
             }
           }
         }
@@ -255,8 +269,11 @@ class views_field_view_handler_field_view extends views_handler_field {
         // Only perform this loop if there are actually arguments present.
         if (!empty($this->options['arguments'])) {
           // Create array of tokens.
+          $args = array();
           $tokens = explode(',', $this->options['arguments']);
-          $args = $this->get_token_values($tokens, $values, $this->view);
+          foreach ($tokens as $token) {
+            $args[] = $this->get_token_value($token, $this->view);
+          }
         }
         // get view etc… and execute.
         $view = views_get_view($this->options['view']);
@@ -299,12 +316,8 @@ class views_field_view_handler_field_view extends views_handler_field {
   /**
    * Get raw token values from tokens.
    * 
-   * @param $tokens
-   *  array of token strings. E.g. explode(',', $this->options['args']);
-   * 
-   * @param $values
-   *  object of row field values, as passed into pre_render or render methods.
-   * 
+   * @param $token
+   *  token string. E.g. explode(',', $this->options['args']);
    * @param $view
    *  Full view object to get token values from.
    * 
@@ -312,21 +325,40 @@ class views_field_view_handler_field_view extends views_handler_field {
    *  array of raw argument values, returned in the same order as the token were passed in.
    * 
    */
-  function get_token_values($tokens, $values, $view) {
-    $args = array();
-    // Add each argument token configured for this view_field.
-    foreach ($tokens as $token) {
-      // Trim whitespace and remove the brackets around the token.
-      $argument = substr(trim($token), 1, -1);
-      // Collect all of the values that we intend to use as arguments of our single query.
-      if (isset($view->field[$argument]->field_alias)) {
-        $field_alias = $view->field[$argument]->field_alias;
-        if (isset($values->{$field_alias})) {
-          $args[] = $values->{$field_alias};
-        }
+  function get_token_value($token, $view, $structured = FALSE) {
+    $value = NULL;
+    // Trim whitespace and remove the brackets around the token.
+    $argument = substr(trim($token), 1, -1);
+    $diff = ltrim($argument, '!..%');
+    $token_type = '';
+    if ($argument != $diff) {
+      $token_type = $argument[0];
+      $argument = $diff;
+    }
+    // Collect all of the values that we intend to use as arguments of our single query.
+    if (isset($view->field[$argument])) {
+      switch ($token_type) {
+        case '%':
+          $value = $view->field[$argument]->last_render;
+        break;
+        case '!':
+        default:
+          $value = $view->field[$argument]->original_value;
+        break;
       }
     }
-    return $args;
+    if (!$structured) {
+      return $value;
+    }
+    else {
+      return array(
+        $argument => array(
+          'argument_name' => $argument,
+          'values' => $value,
+        ),
+      );
+    }
+    return $value;
   }
   
   /**
