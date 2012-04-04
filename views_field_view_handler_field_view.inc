@@ -144,22 +144,23 @@ class views_field_view_handler_field_view extends views_handler_field {
       $child_view_display = $this->options['display'];
 
       // Add each argument token configured for this view_field.
-      foreach (explode(',', $this->options['arguments']) as $token) {
-        // Remove the brackets around the token
-        $argument = substr($token, 1, -1);
+      foreach ($this->split_tokens() as $token) {
+        // Remove the brackets around the token etc..
+        $argument = $this->get_token_argument($token);
+
         // Collect all of the values that we intend to use as arguments of our single query.
         // TODO: Get this to be handled by get_token_values() method too.
-        if (isset($this->view->field[$argument]->field_alias)) {
-          if (isset($this->view->field[$argument]->field_info)) {
-            $field_alias = 'field_' . $this->view->field[$argument]->field;
+        if (isset($this->view->field[$argument['arg']]->field_alias)) {
+          if (isset($this->view->field[$argument['arg']]->field_info)) {
+            $field_alias = 'field_' . $this->view->field[$argument['arg']]->field;
           }
           else {
-            $field_alias = $this->view->field[$argument]->field_alias;
+            $field_alias = $this->view->field[$argument['arg']]->field_alias;
           }
 
           foreach ($values as $value) {
             if (isset($value->$field_alias)) {
-              $this->child_arguments[$field_alias]['argument_name'] = $argument;
+              $this->child_arguments[$field_alias]['argument_name'] = $argument['arg'];
 
               if (is_array($value->$field_alias)) {
                 $field_values = array();
@@ -177,7 +178,7 @@ class views_field_view_handler_field_view extends views_handler_field {
           }
         }
       }
-
+dpm($this->child_arguments);
       // If we don't have child arguments we should not try to do any of our magic.
       if (count($this->child_arguments)) {
         // Cache the child_view in this object to minize our calls to views_get_view.
@@ -226,7 +227,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         // Now that the query has run, we need to get the field alias for each argument field
         // so that it can be identified later.
         foreach ($argument_ids as $child_argument_name => $argument_id) {
-          $this->child_arguments[$child_argument_name]['child_view_field_alias'] = $child_view->field[$argument_id]->field_alias;
+          $child_alias = (isset($child_view->field[$argument_id]->field_alias) && $child_view->field[$argument_id]->field_alias !== 'unknown') ? $child_view->field[$argument_id]->field_alias : $child_view->field[$argument_id]->real_field;
+          $this->child_arguments[$child_argument_name]['child_view_field_alias'] = $child_alias;
         }
         $results = $child_view->result;
 
@@ -288,8 +290,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         if (!empty($this->options['arguments'])) {
           // Create array of tokens.
           $args = array();
-          $tokens = preg_split('/,|\//', $this->options['arguments']);
-          foreach ($tokens as $token) {
+
+          foreach ($this->split_tokens() as $token) {
             $args[] = $this->get_token_value($token, $this->view);
           }
         }
@@ -335,7 +337,7 @@ class views_field_view_handler_field_view extends views_handler_field {
   }
 
   /**
-   * Get raw token values from tokens.
+   * Get field values from tokens.
    * 
    * @param $token
    *  token string. E.g. explode(',', $this->options['args']);
@@ -346,27 +348,20 @@ class views_field_view_handler_field_view extends views_handler_field {
    *  array of raw argument values, returned in the same order as the token were passed in.
    * 
    */
-  function get_token_value($token, $view, $structured = FALSE) {
+  function get_token_render_value($token, $view) {
     $value = NULL;
-    // Trim whitespace and remove the brackets around the token.
-    $argument = substr(trim($token), 1, -1);
-    $diff = ltrim($argument, '!..%');
-    $token_type = '';
 
-    if ($argument != $diff) {
-      $token_type = $argument[0];
-      $argument = $diff;
-    }
+    $argument = $this->get_token_argument($token);
 
     // Collect all of the values that we intend to use as arguments of our single query.
-    if (isset($view->field[$argument])) {
+    if (isset($view->field[$argument['arg']])) {
       switch ($token_type) {
         case '%':
-          $value = $view->field[$argument]->last_render;
+          $value = $view->field[$argument['arg']]->last_render;
         break;
         case '!':
         default:
-          $value = $view->field[$argument]->original_value;
+          $value = $view->field[$argument['arg']]->original_value;
         break;
       }
     }
@@ -387,6 +382,42 @@ class views_field_view_handler_field_view extends views_handler_field {
     }
 
     return $value;
+  }
+
+  /**
+   * Return the argument type and raw argument from a token.
+   * E.g. [!test_token] will return "array('token_type' => '!', 'arg' => test_token)".
+   *
+   * @param $token
+   *  A single token string.
+   *
+   * @return
+   *  Array containing token_type and arg (As described above).
+   */
+  function get_token_argument($token) {
+    // Trim whitespace and remove the brackets around the token.
+    $argument = substr(trim($token), 1, -1);
+    $diff = ltrim($argument, '!..%');
+    $token_type = '';
+
+    if ($argument != $diff) {
+      $token_type = $argument[0];
+      // Make the new argument the diff (without token type character).
+      $argument = $diff;
+    }
+
+    return array(
+      'token_type' => $token_type,
+      'arg' => $argument,
+    );
+  }
+
+  /**
+   * Returns array of tokens/values to be used in child views.
+   * String containing tokens is split on either "," or "/" characters.
+   */
+  function split_tokens() {
+    return preg_split('/,|\//', $this->options['arguments']);
   }
 
   /**
@@ -445,4 +476,4 @@ class views_field_view_handler_field_view extends views_handler_field {
     return $output;
   }
 
-}
+} // views_field_view_handler_field_view.
