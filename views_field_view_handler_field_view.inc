@@ -394,7 +394,7 @@ class views_field_view_handler_field_view extends views_handler_field {
    */
   function get_token_argument($token) {
     // Trim whitespace and remove the brackets around the token.
-    $argument = substr(trim($token), 1, -1);
+    $argument = trim(trim($token), '[]');
     $diff = ltrim($argument, '!..%');
     $token_type = '';
 
@@ -469,7 +469,7 @@ class views_field_view_handler_field_view extends views_handler_field {
     }
 
     $output .= '<p><em>' . t('Using rendered (%) tokens can cause unexpected behaviour, as this will use the last output of the field. 
-      This could be re written output also.') . '</em></p>';
+      This could be re written output also. If no prefix is used in the token pattern, "!" will be used as a default.') . '</em></p>';
 
     return $output;
   }
