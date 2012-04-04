@@ -85,8 +85,9 @@ class views_field_view_handler_field_view extends views_handler_field {
       );
       $form['arguments'] = array(
         '#title' => t('Contextual filters'),
-        '#description' => t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view. See below list of available replacement tokens.
-          Static values are also be passed to child views if they do not match a token format. You could pass static ID\'s or taxonomy terms in this way. E.g. 123 or "my taxonomy term".'),
+        '#description' => t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view. 
+          See below list of available replacement tokens. Static values are also be passed to child views if they do not match a token format. 
+          You could pass static ID\'s or taxonomy terms in this way. E.g. 123 or "my taxonomy term".'),
         '#type' => 'textfield',
         '#default_value' => $this->options['arguments'],
         '#fieldset' => 'views_field_view',
@@ -104,8 +105,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#title' => t('Aggregate queries'),
         '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries. 
           This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed). 
-          <strong>Currently child views must be configured to "display all values" if no contextual filter is present and query aggregation is enabled.</strong>. 
-          This may only work on simple views, please test thoroughly.'),
+          <strong>Currently child views must be configured to "Display all results for the specified field" if no contextual filter is present and 
+          query aggregation is enabled.</strong>. This may only work on simple views, please test thoroughly.'),
         '#type' => 'checkbox',
         '#default_value' => $this->options['query_aggregation'],
         '#fieldset' => 'views_field_view',
@@ -146,27 +147,35 @@ class views_field_view_handler_field_view extends views_handler_field {
       // Add each argument token configured for this view_field.
       foreach ($this->split_tokens() as $token) {
         // Remove the brackets around the token etc..
-        $argument = $this->get_token_argument($token);
-
+        $token_info = $this->get_token_argument($token);
+        $argument = $token_info['arg'];
+        $token_type = $token_info['type'];
         // Collect all of the values that we intend to use as arguments of our single query.
         // TODO: Get this to be handled by get_token_values() method too.
-        if (isset($this->view->field[$argument['arg']]->field_alias)) {
-          if (isset($this->view->field[$argument['arg']]->field_info)) {
-            $field_alias = 'field_' . $this->view->field[$argument['arg']]->field;
+        if (isset($this->view->field[$argument])) {
+          if (isset($this->view->field[$argument]->field_info)) {
+            $field_alias = 'field_' . $this->view->field[$argument]->field;
           }
-          else {
-            $field_alias = $this->view->field[$argument['arg']]->field_alias;
+          elseif (isset($this->view->field[$argument]->field_alias)) {
+            $field_alias = $this->view->field[$argument]->field_alias;
           }
 
           foreach ($values as $value) {
             if (isset($value->$field_alias)) {
-              $this->child_arguments[$field_alias]['argument_name'] = $argument['arg'];
+              $this->child_arguments[$field_alias]['argument_name'] = $field_alias;
 
               if (is_array($value->$field_alias)) {
                 $field_values = array();
 
                 foreach ($value->$field_alias as $field_item) {
-                  $field_values[] = $field_item['raw']['value'];
+                  switch ($token_type) {
+                    case '%':
+                      $field_values[] = $field_item['rendered']['value'];
+                    break;
+                    case '!':
+                    default:
+                      $field_values[] = $field_item['raw']['value'];
+                  }
                 }
                 $field_value = (count($field_values) > 1) ? $field_values : reset($field_values);
                 $this->child_arguments[$field_alias]['values'][] = $field_value;
@@ -178,7 +187,7 @@ class views_field_view_handler_field_view extends views_handler_field {
           }
         }
       }
-dpm($this->child_arguments);
+
       // If we don't have child arguments we should not try to do any of our magic.
       if (count($this->child_arguments)) {
         // Cache the child_view in this object to minize our calls to views_get_view.
@@ -348,20 +357,21 @@ dpm($this->child_arguments);
    *  array of raw argument values, returned in the same order as the token were passed in.
    * 
    */
-  function get_token_render_value($token, $view) {
+  function get_token_value($token, $view) {
     $value = NULL;
-
-    $argument = $this->get_token_argument($token);
+    $token_info = $this->get_token_argument($token);
+    $arg = $token_info['arg'];
+    $token_type = $token_info['type'];
 
     // Collect all of the values that we intend to use as arguments of our single query.
-    if (isset($view->field[$argument['arg']])) {
+    if (isset($view->field[$arg])) {
       switch ($token_type) {
         case '%':
-          $value = $view->field[$argument['arg']]->last_render;
+          $value = $view->field[$arg]->last_render;
         break;
         case '!':
         default:
-          $value = $view->field[$argument['arg']]->original_value;
+          $value = $view->field[$arg]->original_value;
         break;
       }
     }
@@ -369,30 +379,18 @@ dpm($this->child_arguments);
       $value = check_plain(trim($token, '\'"'));
     }
 
-    if (!$structured) {
-      return $value;
-    }
-    else {
-      return array(
-        $argument => array(
-          'argument_name' => $argument,
-          'values' => $value,
-        ),
-      );
-    }
-
     return $value;
   }
 
   /**
    * Return the argument type and raw argument from a token.
-   * E.g. [!test_token] will return "array('token_type' => '!', 'arg' => test_token)".
+   * E.g. [!test_token] will return "array('type' => '!', 'arg' => test_token)".
    *
    * @param $token
    *  A single token string.
    *
    * @return
-   *  Array containing token_type and arg (As described above).
+   *  Array containing type and arg (As described above).
    */
   function get_token_argument($token) {
     // Trim whitespace and remove the brackets around the token.
@@ -407,7 +405,7 @@ dpm($this->child_arguments);
     }
 
     return array(
-      'token_type' => $token_type,
+      'type' => $token_type,
       'arg' => $argument,
     );
   }
