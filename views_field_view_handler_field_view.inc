@@ -151,13 +151,15 @@ class views_field_view_handler_field_view extends views_handler_field {
         $argument = $token_info['arg'];
         $token_type = $token_info['type'];
         // Collect all of the values that we intend to use as arguments of our single query.
-        // TODO: Get this to be handled by get_token_values() method too.
+        // TODO: Get this to be handled by get_token_value() method too.
         if (isset($this->view->field[$argument])) {
           if (isset($this->view->field[$argument]->field_info)) {
             $field_alias = 'field_' . $this->view->field[$argument]->field;
+            $field_key = key($this->view->field[$argument]->field_info['columns']);
           }
           elseif (isset($this->view->field[$argument]->field_alias)) {
             $field_alias = $this->view->field[$argument]->field_alias;
+            $field_key = 'value';
           }
 
           foreach ($values as $value) {
@@ -170,11 +172,11 @@ class views_field_view_handler_field_view extends views_handler_field {
                 foreach ($value->$field_alias as $field_item) {
                   switch ($token_type) {
                     case '%':
-                      $field_values[] = $field_item['rendered']['value'];
+                      $field_values[] = $field_item['rendered']['#markup'];
                     break;
                     case '!':
                     default:
-                      $field_values[] = $field_item['raw']['value'];
+                      $field_values[] = $field_item['raw'][$field_key];
                   }
                 }
                 $field_value = (count($field_values) > 1) ? $field_values : reset($field_values);
@@ -300,7 +302,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         if (!empty($this->options['arguments'])) {
           // Create array of tokens.
           foreach ($this->split_tokens() as $token) {
-            $args[] = $this->get_token_value($token, $this->view);
+            $args[] = $this->get_token_value($token, $values, $this->view);
           }
         }
 
@@ -360,7 +362,7 @@ class views_field_view_handler_field_view extends views_handler_field {
    *  array of raw argument values, returned in the same order as the token were passed in.
    * 
    */
-  function get_token_value($token, $view) {
+  function get_token_value($token, $values, $view) {
     $value = NULL;
     $token_info = $this->get_token_argument($token);
     $arg = $token_info['arg'];
@@ -374,7 +376,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         break;
         case '!':
         default:
-          $value = $view->field[$arg]->original_value;
+          $value = $view->field[$arg]->get_value($values);
         break;
       }
     }
