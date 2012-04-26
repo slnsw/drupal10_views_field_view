@@ -64,6 +64,11 @@ class views_field_view_handler_field_view extends views_handler_field {
       '#fieldset' => 'views_field_view',
     );
 
+    // If there is no view set, use the first one for now.
+    if (empty($this->options['view'])) {
+      $this->options['view'] = reset($options);
+    }
+
     if ($this->options['view']) {
       $view = views_get_view($this->options['view']);
 
