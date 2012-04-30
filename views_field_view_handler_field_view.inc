@@ -41,7 +41,7 @@ class views_field_view_handler_field_view extends views_handler_field {
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
-    $options = drupal_map_assoc(array_keys(views_get_enabled_views()));
+    $view_options = drupal_map_assoc(array_keys(views_get_enabled_views()));
     
     $form['views_field_view'] = array(
       '#type' => 'fieldset',
@@ -55,7 +55,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       '#title' => t('View'),
       '#description' => t('Select a view to embed.'),
       '#default_value' => $this->options['view'],
-      '#options' => $options,
+      '#options' => $view_options,
       '#ajax' => array(
         'path' => views_ui_build_form_url($form_state),
       ),
@@ -65,7 +65,7 @@ class views_field_view_handler_field_view extends views_handler_field {
     );
 
     // If there is no view set, use the first one for now.
-    if (empty($this->options['view'])) {
+    if (count($view_options) && empty($this->options['view'])) {
       $this->options['view'] = reset($options);
     }
 
