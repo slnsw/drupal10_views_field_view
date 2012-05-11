@@ -313,19 +313,23 @@ class views_field_view_handler_field_view extends views_handler_field {
 
         // get view etc… and execute.
         $view = views_get_view($this->options['view']);
-        $view->set_display($this->options['display']);
-        $view->pre_execute($args);
-        $view->execute();
 
-        // If there are no results and hide_empty is set.
-        if (empty($view->result) && $this->options['hide_empty']) {
-          return $output;
+        // Only execute and render the view if the user has access.
+        if ($view->access($this->options['display'])) {
+          $view->set_display($this->options['display']);
+          $view->pre_execute($args);
+          $view->execute();
+
+          // If there are no results and hide_empty is set.
+          if (empty($view->result) && $this->options['hide_empty']) {
+            return $output;
+          }
+          // Else just call render on the view object.
+          else {
+            $output = $view->render();
+          }
         }
-        // Else just call render on the view object.
-        else {
-          $output = $view->render();
-        }
-        //$output = call_user_func_array('views_embed_view', $args);
+
         $running[$this->options['view']][$this->options['display']] = FALSE;
       }
       // Verify we have a child view (if there were no arguments specified we
@@ -333,16 +337,19 @@ class views_field_view_handler_field_view extends views_handler_field {
       elseif ($this->child_view && $this->options['view'] && $this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $child_view = $this->child_view;
-        $results =  $this->child_view_results[$values->{$this->view->base_field}];
-        // Inject the appropriate result set before rendering the view.
-        $child_view->result = $results;
+        // Only execute and render the view if the user has access.
+        if ($child_view->access($this->options['display'])) {
+          $results =  $this->child_view_results[$values->{$this->view->base_field}];
+          // Inject the appropriate result set before rendering the view.
+          $child_view->result = $results;
 
-        if (isset($child_view->style_plugin->rendered_fields)) {
-          unset($child_view->style_plugin->rendered_fields);
+          if (isset($child_view->style_plugin->rendered_fields)) {
+            unset($child_view->style_plugin->rendered_fields);
+          }
+
+          $output = $child_view->render();
+          $running[$this->options['view']][$this->options['display']] = FALSE;
         }
-
-        $output = $child_view->render();
-        $running[$this->options['view']][$this->options['display']] = FALSE;
       }
     }
     else {
