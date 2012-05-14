@@ -151,7 +151,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       $child_view_display = $this->options['display'];
 
       // Add each argument token configured for this view_field.
-      foreach ($this->split_tokens() as $token) {
+      foreach ($this->split_tokens($this->options['arguments']) as $token) {
         // Remove the brackets around the token etc..
         $token_info = $this->get_token_argument($token);
         $argument = $token_info['arg'];
@@ -296,6 +296,12 @@ class views_field_view_handler_field_view extends views_handler_field {
   }
 
   function render($values) {
+    // If it's not a field handler and there are no values
+    // Get the first result row from the view and use that.
+    if (($this->handler_type !== 'field') && empty($values) && isset($this->view->result)) {
+      $values = reset($this->view->result);
+    }
+
     static $running = array();
     //Set empty output, so we always have an output variable.
     $output = '';
@@ -309,7 +315,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         // Only perform this loop if there are actually arguments present.
         if (!empty($this->options['arguments'])) {
           // Create array of tokens.
-          foreach ($this->split_tokens() as $token) {
+          foreach ($this->split_tokens($this->options['arguments']) as $token) {
             $args[] = $this->get_token_value($token, $values, $this->view);
           }
         }
@@ -436,9 +442,12 @@ class views_field_view_handler_field_view extends views_handler_field {
   /**
    * Returns array of tokens/values to be used in child views.
    * String containing tokens is split on either "," or "/" characters.
+   *
+   * @param $token_string
+   *   The string of tokens to split.
    */
-  function split_tokens() {
-    return preg_split('/,|\//', $this->options['arguments']);
+  function split_tokens($token_string) {
+    return preg_split('/,|\//', $token_string);
   }
 
   /**
