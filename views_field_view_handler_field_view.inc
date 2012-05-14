@@ -288,7 +288,6 @@ class views_field_view_handler_field_view extends views_handler_field {
     static $running = array();
     //Set empty output, so we always have an output variable.
     $output = '';
-
     // Protect against the evil / recursion.
     // Set the variable for yourself, this is not for the normal "user".
     if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
@@ -342,8 +341,10 @@ class views_field_view_handler_field_view extends views_handler_field {
       $output = t('Recursion, stop!');
     }
 
-    // Add the rendered output back to the $values object so it is available in $view->result objects.
-    $values->{'views_field_view_' . $this->options['id']} = $output;
+    if (!empty($output)) {
+      // Add the rendered output back to the $values object so it is available in $view->result objects.
+      $values->{'views_field_view_' . $this->options['id']} = $output;
+    }
 
     return $output;
   }
@@ -442,6 +443,14 @@ class views_field_view_handler_field_view extends views_handler_field {
     foreach ($this->view->display_handler->get_handlers('argument') as $arg => $handler) {
       $options[t('Arguments')]['%' . ++$count] = t('@argument title', array('@argument' => $handler->ui_name()));
       $options[t('Arguments')]['!' . $count] = t('@argument input', array('@argument' => $handler->ui_name()));
+    }
+
+    // Add replacements for query string parameters.
+    foreach ($_GET as $param => $val) {
+      if (is_array($val)) {
+        $val = implode(', ', $val);
+      }
+      $options[t('Query string')]["[%$param]"] = strip_tags(decode_entities($val));
     }
 
     $this->document_self_tokens($options[t('Fields')]);
