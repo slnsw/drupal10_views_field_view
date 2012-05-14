@@ -9,8 +9,9 @@ class views_field_view_handler_field_view extends views_handler_field {
   /**
    * If query aggregation is used, all of the arguments for the child view.
    *
-   * This is a multidimensional array containing field_aliases for the argument's fields
-   * and containing a linear array of all of the results to be used as arguments in various fields.
+   * This is a multidimensional array containing field_aliases for the argument's
+   * fields and containing a linear array of all of the results to be used as 
+   * arguments in various fields.
    */
   public $child_arguments = array();
 
@@ -203,7 +204,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         // Set the appropriate display.
         $child_view->access($child_view_display);
 
-        // Find the arguments on the child view that we're going to need if the arguments have been overridden.
+        // Find the arguments on the child view that we're going to need if the
+        // arguments have been overridden.
         foreach ($child_view->display['default']->display_options['arguments'] as $argument_name => $argument_value) {
           if (isset($child_view->display[$child_view_display]->display_options['arguments'][$argument_name])) {
             $configured_arguments[$argument_name] = $child_view->display[$child_view_display]->display_options['arguments'][$argument_name];
@@ -222,8 +224,6 @@ class views_field_view_handler_field_view extends views_handler_field {
           // To be able to later split up our results among the appropriate rows,
           // we need to add whatever argument fields we're using to the query.
           $argument_ids[$child_argument_name] = $child_view->add_item($child_view_display, 'field', $configured_argument['table'], $configured_argument['field'], array('exclude' => TRUE));
-          // Initialize the query object so that we have it to alter.
-          // The child view may have been limited but our result set here should not be.
 
           if (isset($child_view->pager['items_per_page'])) {
             $child_view->pager['items_per_page'] = 0;
@@ -234,6 +234,8 @@ class views_field_view_handler_field_view extends views_handler_field {
           $child_view->query->add_where(0, $configured_argument['table'] . '.' . $configured_argument['field'], $child_argument['values']);
         }
 
+        // Initialize the query object so that we have it to alter.
+        // The child view may have been limited but our result set here should not be.
         $child_view->build_info['query'] = $child_view->query->query();
         $child_view->build_info['count_query'] = $child_view->query->query(TRUE);
         $child_view->build_info['query_args'] = $child_view->query->get_where_args();
@@ -249,7 +251,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         $results = $child_view->result;
 
         // Finally: Cache the results so that they're easily accessible for the render function.
-        // Loop through the results from the main view so that we can cache the results relevant to each row.
+        // Loop through the results from the main view so that we can cache the results
+        // relevant to each row.
         foreach ($values as $value) {
           // Add an element to the child_view_results array for each of the rows keyed by this view's base_field.
           $this->child_view_results[$value->{$this->view->base_field}] = array();
@@ -260,7 +263,8 @@ class views_field_view_handler_field_view extends views_handler_field {
             $matching_item = TRUE;
             // Check each argument that we care about to ensure that it matches.
             foreach ($this->child_arguments as $child_argument_field_alias => $child_argument) {
-              // If one of our arguments does not match the argument of this field, do not add it to this row.
+              // If one of our arguments does not match the argument of this field,
+              // do not add it to this row.
               if (isset($value->$child_argument_field_alias) && $value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
                 $matching_item = FALSE;
               }
@@ -453,7 +457,8 @@ class views_field_view_handler_field_view extends views_handler_field {
       }
     }
 
-    $count = 0; // This lets us prepare the key as we want it printed.
+    // This lets us prepare the key as we want it printed.
+    $count = 0;
 
     foreach ($this->view->display_handler->get_handlers('argument') as $arg => $handler) {
       $options[t('Arguments')]['%' . ++$count] = t('@argument title', array('@argument' => $handler->ui_name()));
