@@ -41,7 +41,7 @@ class views_field_view_handler_field_view extends views_handler_field {
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
-    $options = drupal_map_assoc(array_keys(views_get_enabled_views()));
+    $view_options = drupal_map_assoc(array_keys(views_get_enabled_views()));
     
     $form['views_field_view'] = array(
       '#type' => 'fieldset',
@@ -55,7 +55,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       '#title' => t('View'),
       '#description' => t('Select a view to embed.'),
       '#default_value' => $this->options['view'],
-      '#options' => $options,
+      '#options' => $view_options,
       '#ajax' => array(
         'path' => views_ui_build_form_url($form_state),
       ),
@@ -63,6 +63,11 @@ class views_field_view_handler_field_view extends views_handler_field {
       '#executes_submit_callback' => TRUE,
       '#fieldset' => 'views_field_view',
     );
+
+    // If there is no view set, use the first one for now.
+    if (count($view_options) && empty($this->options['view'])) {
+      $this->options['view'] = reset($options);
+    }
 
     if ($this->options['view']) {
       $view = views_get_view($this->options['view']);
@@ -151,13 +156,15 @@ class views_field_view_handler_field_view extends views_handler_field {
         $argument = $token_info['arg'];
         $token_type = $token_info['type'];
         // Collect all of the values that we intend to use as arguments of our single query.
-        // TODO: Get this to be handled by get_token_values() method too.
+        // TODO: Get this to be handled by get_token_value() method too.
         if (isset($this->view->field[$argument])) {
           if (isset($this->view->field[$argument]->field_info)) {
             $field_alias = 'field_' . $this->view->field[$argument]->field;
+            $field_key = key($this->view->field[$argument]->field_info['columns']);
           }
           elseif (isset($this->view->field[$argument]->field_alias)) {
             $field_alias = $this->view->field[$argument]->field_alias;
+            $field_key = 'value';
           }
 
           foreach ($values as $value) {
@@ -170,11 +177,11 @@ class views_field_view_handler_field_view extends views_handler_field {
                 foreach ($value->$field_alias as $field_item) {
                   switch ($token_type) {
                     case '%':
-                      $field_values[] = $field_item['rendered']['value'];
+                      $field_values[] = $field_item['rendered']['#markup'];
                     break;
                     case '!':
                     default:
-                      $field_values[] = $field_item['raw']['value'];
+                      $field_values[] = $field_item['raw'][$field_key];
                   }
                 }
                 $field_value = (count($field_values) > 1) ? $field_values : reset($field_values);
@@ -299,25 +306,29 @@ class views_field_view_handler_field_view extends views_handler_field {
         if (!empty($this->options['arguments'])) {
           // Create array of tokens.
           foreach ($this->split_tokens() as $token) {
-            $args[] = $this->get_token_value($token, $this->view);
+            $args[] = $this->get_token_value($token, $values, $this->view);
           }
         }
 
         // get view etc… and execute.
         $view = views_get_view($this->options['view']);
-        $view->set_display($this->options['display']);
-        $view->pre_execute($args);
-        $view->execute();
 
-        // If there are no results and hide_empty is set.
-        if (empty($view->result) && $this->options['hide_empty']) {
-          return $output;
+        // Only execute and render the view if the user has access.
+        if ($view->access($this->options['display'])) {
+          $view->set_display($this->options['display']);
+          $view->pre_execute($args);
+          $view->execute();
+
+          // If there are no results and hide_empty is set.
+          if (empty($view->result) && $this->options['hide_empty']) {
+            return $output;
+          }
+          // Else just call render on the view object.
+          else {
+            $output = $view->render();
+          }
         }
-        // Else just call render on the view object.
-        else {
-          $output = $view->render();
-        }
-        //$output = call_user_func_array('views_embed_view', $args);
+
         $running[$this->options['view']][$this->options['display']] = FALSE;
       }
       // Verify we have a child view (if there were no arguments specified we
@@ -325,16 +336,19 @@ class views_field_view_handler_field_view extends views_handler_field {
       elseif ($this->child_view && $this->options['view'] && $this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $child_view = $this->child_view;
-        $results =  $this->child_view_results[$values->{$this->view->base_field}];
-        // Inject the appropriate result set before rendering the view.
-        $child_view->result = $results;
+        // Only execute and render the view if the user has access.
+        if ($child_view->access($this->options['display'])) {
+          $results =  $this->child_view_results[$values->{$this->view->base_field}];
+          // Inject the appropriate result set before rendering the view.
+          $child_view->result = $results;
 
-        if (isset($child_view->style_plugin->rendered_fields)) {
-          unset($child_view->style_plugin->rendered_fields);
+          if (isset($child_view->style_plugin->rendered_fields)) {
+            unset($child_view->style_plugin->rendered_fields);
+          }
+
+          $output = $child_view->render();
+          $running[$this->options['view']][$this->options['display']] = FALSE;
         }
-
-        $output = $child_view->render();
-        $running[$this->options['view']][$this->options['display']] = FALSE;
       }
     }
     else {
@@ -361,7 +375,7 @@ class views_field_view_handler_field_view extends views_handler_field {
    *  array of raw argument values, returned in the same order as the token were passed in.
    * 
    */
-  function get_token_value($token, $view) {
+  function get_token_value($token, $values, $view) {
     $value = NULL;
     $token_info = $this->get_token_argument($token);
     $arg = $token_info['arg'];
@@ -375,7 +389,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         break;
         case '!':
         default:
-          $value = $view->field[$arg]->original_value;
+          $value = $view->field[$arg]->get_value($values);
         break;
       }
     }
