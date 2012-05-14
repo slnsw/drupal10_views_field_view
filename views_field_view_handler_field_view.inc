@@ -356,7 +356,8 @@ class views_field_view_handler_field_view extends views_handler_field {
     }
 
     if (!empty($output)) {
-      // Add the rendered output back to the $values object so it is available in $view->result objects.
+      // Add the rendered output back to the $values object
+      // so it is available in $view->result objects.
       $values->{'views_field_view_' . $this->options['id']} = $output;
     }
 
