@@ -67,17 +67,17 @@ class views_field_view_handler_field_view extends views_handler_field {
 
     // If there is no view set, use the first one for now.
     if (count($view_options) && empty($this->options['view'])) {
-      $this->options['view'] = reset($options);
+      $this->options['view'] = reset($view_options);
     }
 
     if ($this->options['view']) {
       $view = views_get_view($this->options['view']);
 
-      $options = array();
+      $display_options = array();
       foreach ($view->display as $name => $display) {
         // Allow to embed a different display as the current one.
         if ($this->options['view'] != $this->view->name || ($this->view->current_display != $name)) {
-          $options[$name] = $display->display_title;
+          $display_options[$name] = $display->display_title;
         }
       }
 
@@ -86,7 +86,7 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#title' => t('Display'),
         '#description' => t('Select a view display to use.'),
         '#default_value' => $this->options['display'],
-        '#options' => $options,
+        '#options' => $display_options,
         '#fieldset' => 'views_field_view',
       );
       $form['arguments'] = array(
@@ -107,16 +107,19 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#fieldset' => 'views_field_view',
       );
 
-      $form['query_aggregation'] = array(
-        '#title' => t('Aggregate queries'),
-        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries. 
-          This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed). 
-          <strong>Currently child views must be configured to "Display all results for the specified field" if no contextual filter is present and 
-          query aggregation is enabled.</strong>. This may only work on simple views, please test thoroughly.'),
-        '#type' => 'checkbox',
-        '#default_value' => $this->options['query_aggregation'],
-        '#fieldset' => 'views_field_view',
-      );
+      // It doesn't make sense to allow aggregation unless it's a field handler.
+      if (($this->handler_type == 'field')) {
+        $form['query_aggregation'] = array(
+          '#title' => t('Aggregate queries'),
+          '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.
+            This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).
+            <strong>Currently child views must be configured to "Display all results for the specified field" if no contextual filter is present and
+            query aggregation is enabled.</strong>. This may only work on simple views, please test thoroughly.'),
+          '#type' => 'checkbox',
+          '#default_value' => $this->options['query_aggregation'],
+          '#fieldset' => 'views_field_view',
+        );
+      }
 
       // Ensure we're working with a SQL view.
       $views_data = views_fetch_data($view->base_table);
