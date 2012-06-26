@@ -307,8 +307,6 @@ class views_field_view_handler_field_view extends views_handler_field {
     }
 
     static $running = array();
-    //Set empty output, so we always have an output variable.
-    $output = '';
     // Protect against the evil / recursion.
     // Set the variable for yourself, this is not for the normal "user".
     if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
@@ -335,7 +333,7 @@ class views_field_view_handler_field_view extends views_handler_field {
 
           // If there are no results and hide_empty is set.
           if (empty($view->result) && $this->options['hide_empty']) {
-            return $output;
+            $output = '';
           }
           // Else just call render on the view object.
           else {
@@ -353,14 +351,21 @@ class views_field_view_handler_field_view extends views_handler_field {
         // Only execute and render the view if the user has access.
         if ($child_view->access($this->options['display'])) {
           $results =  $this->child_view_results[$values->{$this->view->base_field}];
-          // Inject the appropriate result set before rendering the view.
-          $child_view->result = $results;
+          // If there are no results and hide_empty is set.
+          if (empty($results) && $this->options['hide_empty']) {
+            $output = '';
+          }
+          else {
+            // Inject the appropriate result set before rendering the view.
+            $child_view->result = $results;
 
-          if (isset($child_view->style_plugin->rendered_fields)) {
-            unset($child_view->style_plugin->rendered_fields);
+            if (isset($child_view->style_plugin->rendered_fields)) {
+              unset($child_view->style_plugin->rendered_fields);
+            }
+
+            $output = $child_view->render();
           }
 
-          $output = $child_view->render();
           $running[$this->options['view']][$this->options['display']] = FALSE;
         }
       }
