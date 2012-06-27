@@ -396,7 +396,6 @@ class views_field_view_handler_field_view extends views_handler_field {
    * 
    */
   function get_token_value($token, $values, $view) {
-    $value = NULL;
     $token_info = $this->get_token_argument($token);
     $arg = $token_info['arg'];
     $token_type = $token_info['type'];
@@ -410,6 +409,20 @@ class views_field_view_handler_field_view extends views_handler_field {
         case '!':
         default:
           $value = $view->field[$arg]->get_value($values);
+        break;
+      }
+    }
+    elseif (isset($view->args[$arg - 1])) {
+      switch ($token_type) {
+        case '%':
+          // Get an array of argument keys. So we can use the index as an
+          // identifier.
+          $keys = array_keys($view->argument);
+          $value = $view->argument[$keys[$arg - 1]]->get_title();
+        break;
+        case '!':
+        default:
+          $value = $view->args[$arg - 1];
         break;
       }
     }
