@@ -300,6 +300,7 @@ class views_field_view_handler_field_view extends views_handler_field {
   }
 
   function render($values) {
+    $output = NULL;
     // If it's not a field handler and there are no values
     // Get the first result row from the view and use that.
     if (($this->handler_type !== 'field') && empty($values) && isset($this->view->result)) {
