@@ -142,7 +142,7 @@ class views_field_view_handler_field_view extends views_handler_field {
    * This gives the handlers some time to set up before any handler has
    * been rendered.
    *
-   * @param $values
+   * @param array $values
    *   An array of all objects returned from the query.
    */
   function pre_render(&$values) {
@@ -387,13 +387,14 @@ class views_field_view_handler_field_view extends views_handler_field {
   /**
    * Get field values from tokens.
    * 
-   * @param $token
+   * @param string $token
    *  token string. E.g. explode(',', $this->options['args']);
-   * @param $view
+   * @param View $view
    *  Full view object to get token values from.
    * 
-   * @return
-   *  array of raw argument values, returned in the same order as the token were passed in.
+   * @return array
+   *  An array of raw argument values, returned in the same order as the token
+   *  were passed in.
    * 
    */
   function get_token_value($token, $values, $view) {
@@ -438,11 +439,11 @@ class views_field_view_handler_field_view extends views_handler_field {
    * Return the argument type and raw argument from a token.
    * E.g. [!test_token] will return "array('type' => '!', 'arg' => test_token)".
    *
-   * @param $token
+   * @param string $token
    *  A single token string.
    *
-   * @return
-   *  Array containing type and arg (As described above).
+   * @return array
+   *  An array containing type and arg (As described above).
    */
   function get_token_argument($token) {
     // Trim whitespace and remove the brackets around the token.
@@ -466,8 +467,11 @@ class views_field_view_handler_field_view extends views_handler_field {
    * Returns array of tokens/values to be used in child views.
    * String containing tokens is split on either "," or "/" characters.
    *
-   * @param $token_string
+   * @param string $token_string
    *   The string of tokens to split.
+   *
+   * @return array
+   *   An array of split token strings.
    */
   function split_tokens($token_string) {
     return preg_split('/,|\//', $token_string);
@@ -475,6 +479,9 @@ class views_field_view_handler_field_view extends views_handler_field {
 
   /**
    * Get available field tokens, code/logic stolen from views_handler_field.inc.
+   *
+   * @return string
+   *   A full HTML string, containing a list of available tokens.
    */
   public function get_token_info() {
     // Get a list of the available fields and arguments for token replacement.
