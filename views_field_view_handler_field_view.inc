@@ -30,6 +30,13 @@ class views_field_view_handler_field_view extends views_handler_field {
    */
   public $child_view = FALSE;
 
+  /**
+   * Disable this handler from being used as a 'group by'.
+   */
+  function use_string_group_by() {
+    return FALSE;
+  }
+
   function option_definition() {
     $options = parent::option_definition();
     $options['view'] = array('default' => '');
