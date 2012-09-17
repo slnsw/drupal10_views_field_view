@@ -95,8 +95,49 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#description' => t('Select a view display to use.'),
         '#default_value' => $this->options['display'],
         '#options' => $display_options,
+        '#ajax' => array(
+          'path' => views_ui_build_form_url($form_state),
+        ),
+        '#submit' => array('views_ui_config_item_form_submit_temporary'),
+        '#executes_submit_callback' => TRUE,
         '#fieldset' => 'views_field_view',
       );
+
+      // Provide a way to directly access the views edit link of the child view.
+      // Don't show this link if the current view is the selected child view.
+      if ($this->options['view'] && $this->options['display'] && ($this->view->name != $this->options['view'])) {
+        // use t() here, and set HTML on #link options.
+        $link_text = t('Edit "%view (@display)" view', array('%view' => $this->options['view'], '@display' => $this->options['display']));
+        $form['view_edit'] = array(
+          '#type' => 'container',
+          '#fieldset' => 'views_field_view',
+        );
+        $form['view_edit']['view_edit_link'] = array(
+          '#theme' => 'link',
+          '#text' => $link_text,
+          '#path' => 'admin/structure/views/view/' . $this->options['view'] . '/edit/' . $this->options['display'],
+          '#options' => array(
+            'attributes' => array(
+              'target' => '_blank',
+              'class' => array('views-field-view-child-view-edit'),
+            ),
+            'html' => TRUE,
+          ),
+          '#attached' => array(
+            'css' => array(
+              drupal_get_path('module', 'views_field_view') . '/views_field_view.css',
+            ),
+          ),
+          '#prefix' => '<span>[</span>',
+          '#suffix' => '<span>]</span>',
+        );
+        $form['view_edit']['description'] = array(
+          '#markup' => t('Use this link to open the current child view\'s edit page in a new window.'),
+          '#prefix' => '<div class="description">',
+          '#suffix' => '</div>',
+        );
+      }
+
       $form['arguments'] = array(
         '#title' => t('Contextual filters'),
         '#description' => t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view. 
