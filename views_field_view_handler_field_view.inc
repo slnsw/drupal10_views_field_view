@@ -50,8 +50,8 @@ class views_field_view_handler_field_view extends views_handler_field {
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
-    $view_options = drupal_map_assoc(array_keys(views_get_enabled_views()));
-    
+    $view_options = views_get_views_as_options(TRUE);
+
     $form['views_field_view'] = array(
       '#type' => 'fieldset',
       '#title' => t("View settings"),
@@ -75,7 +75,7 @@ class views_field_view_handler_field_view extends views_handler_field {
 
     // If there is no view set, use the first one for now.
     if (count($view_options) && empty($this->options['view'])) {
-      $this->options['view'] = reset($view_options);
+      $this->options['view'] = reset(array_keys($view_options));
     }
 
     if ($this->options['view']) {
@@ -107,7 +107,7 @@ class views_field_view_handler_field_view extends views_handler_field {
       // Don't show this link if the current view is the selected child view.
       if ($this->options['view'] && $this->options['display'] && ($this->view->name != $this->options['view'])) {
         // use t() here, and set HTML on #link options.
-        $link_text = t('Edit "%view (@display)" view', array('%view' => $this->options['view'], '@display' => $this->options['display']));
+        $link_text = t('Edit "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
         $form['view_edit'] = array(
           '#type' => 'container',
           '#fieldset' => 'views_field_view',
