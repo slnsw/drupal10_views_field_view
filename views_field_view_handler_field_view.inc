@@ -43,7 +43,6 @@ class views_field_view_handler_field_view extends views_handler_field {
     $options['display'] = array('default' => 'default');
     $options['arguments'] = array('default' => '');
     $options['query_aggregation'] = array('default' => FALSE, 'bool' => TRUE);
-    $options['pager_unique'] = array('default' => FALSE, 'bool' => TRUE);
 
     return $options;
   }
@@ -155,13 +154,6 @@ class views_field_view_handler_field_view extends views_handler_field {
         '#collapsed' => TRUE,
         '#value' => $this->get_token_info(),
         '#fieldset' => 'views_field_view',
-      );
-      $form['pager_unique'] = array(
-        '#title' => t('Keep pager IDs unique'),
-        '#description' => t('In order to make pagers in the childview working as expected you have to change the way the pagers are generated.'),
-        '#type' => 'checkbox',
-        '#default_value' => $this->options['pager_unique'],
-        '#fieldset' => 'views_field_view'
       );
 
       // It doesn't make sense to allow aggregation unless it's a field handler.
@@ -386,8 +378,8 @@ class views_field_view_handler_field_view extends views_handler_field {
         if ($view->access($this->options['display'])) {
           $view->set_display($this->options['display']);
 
-          // Check whether the pager IDs should be rewritten.
-          if ($this->options['pager_unique']) {
+          if ($view->display_handler->use_pager()) {
+            // Check whether the pager IDs should be rewritten.
             $view->init_query();
             // Find a proper start value for the ascening pager IDs.
             $start = 0;
@@ -397,8 +389,8 @@ class views_field_view_handler_field_view extends views_handler_field {
             }
 
             // Set the pager ID before initializing the pager, so
-            // views_plugin_pager::set_current_page works as expected,
-            // which is caleld from view::init_pager()
+            // views_plugin_pager::set_current_page works as expected, which is
+            // called from view::init_pager()
             $pager['options']['id'] = $start + 1 + $this->view->row_index;
             $view->display_handler->set_option('pager', $pager);
             $view->init_pager();
