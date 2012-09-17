@@ -470,7 +470,6 @@ class views_field_view_handler_field_view extends views_handler_field {
    * @return array
    *  An array of raw argument values, returned in the same order as the token
    *  were passed in.
-   * 
    */
   function get_token_value($token, $values, $view) {
     $token_info = $this->get_token_argument($token);

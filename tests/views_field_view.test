@@ -20,7 +20,7 @@ class viewsFieldViewTestCase extends DrupalWebTestCase {
     parent::setUp('views', 'node', 'views_field_view');
 
     $this->nodes = array();
-    for ($i = 0; $i < 10; $i++) {
+    for ($i = 0; $i <= 10; $i++) {
       $this->nodes[] = $this->drupalCreateNode();
     }
   }
@@ -66,11 +66,62 @@ class viewsFieldViewTestCase extends DrupalWebTestCase {
     // Sadly it's impossible to check the actual result of the child view, because the object is not saved.
   }
 
-
   /**
-   * @todo
-   * Test token replacement, well actually it's kind of tested with the testNormalView already.
+   * Test field handler methods in a unit test like way.
    */
+  function testFieldHandlerMethods() {
+    $field_handler = new views_field_view_handler_field_view();
+    $this->assertTrue(is_object($field_handler));
+
+    // Test the split_tokens() method.
+    $result = $field_handler->split_tokens('[!uid],[%nid]');
+    $expected = array('[!uid]', '[%nid]');
+    $this->assertEqual($result, $expected, 'The token string has been split correctly (",").');
+
+    $result = $field_handler->split_tokens('[!uid]/[%nid]');
+    $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
+
+    $result = $field_handler->split_tokens('[uid]/[nid]');
+    $expected = array('[uid]', '[nid]');
+    $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
+
+    // Test the get_token_argument() method.
+    $result = $field_handler->get_token_argument('[!uid]');
+    $expected = array('type' => '!', 'arg' => 'uid');
+    $this->assertEqual($result, $expected, 'Correct token argument info processed ("!").');
+
+    $result = $field_handler->get_token_argument('[%uid]');
+    $expected = array('type' => '%', 'arg' => 'uid');
+    $this->assertEqual($result, $expected, 'Correct token argument info processed ("%").');
+
+    $result = $field_handler->get_token_argument('[uid]');
+    $expected = array('type' => '', 'arg' => 'uid');
+    $this->assertEqual($result, $expected, 'Correct token argument info processed.');
+
+    // Test the token values from a view.
+    $view = $this->view_child_normal();
+    $view->execute();
+    $results = $view->result;
+
+    // Add a value to args, just for the purpose of the !1 token to get a value
+    // from but not affecting the query.
+    $view->args = array(5);
+
+    // Test all the results.
+    foreach ($results as $values) {
+      $map = array(
+        '[!title]' => $values->node_title,
+        '[title]' => $values->node_title,
+        '!1' => 5,
+        'static' => 'static',
+      );
+      // @todo Test the last_render % output.
+      foreach ($map as $token => $value) {
+        $processed_value = $field_handler->get_token_value($token, $values, $view);
+        $this->assertIdentical($value, $processed_value, format_string('Expected @token token output', array('@token' => $token)));
+      }
+    }
+  }
 
   /**
    * @todo

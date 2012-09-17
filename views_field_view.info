@@ -7,4 +7,4 @@ package = Views
 dependencies[] = views
 
 files[] = views_field_view_handler_field_view.inc
-files[] = views_field_view.test
+files[] = tests/views_field_view.test
