@@ -34,7 +34,7 @@ class View extends FieldPluginBase {
    * If query aggregation is used, this attribute contains an array of the results
    * of the aggregated child views.
    */
-  public $child_viewResults = array();
+  public $childViewResults = array();
 
   /**
    * If query aggregation is enabled, one instance of the child view to be reused.
