@@ -28,13 +28,13 @@ class View extends FieldPluginBase {
    * fields and containing a linear array of all of the results to be used as 
    * arguments in various fields.
    */
-  public $child_arguments = array();
+  public $childArguments = array();
 
   /**
    * If query aggregation is used, this attribute contains an array of the results
    * of the aggregated child views.
    */
-  public $child_view_results = array();
+  public $child_viewResults = array();
 
   /**
    * If query aggregation is enabled, one instance of the child view to be reused.
@@ -236,7 +236,7 @@ class View extends FieldPluginBase {
 
           foreach ($values as $value) {
             if (isset($value->$field_alias)) {
-              $this->child_arguments[$field_alias]['argument_name'] = $field_alias;
+              $this->childArguments[$field_alias]['argument_name'] = $field_alias;
 
               if (is_array($value->$field_alias)) {
                 $field_values = array();
@@ -252,10 +252,10 @@ class View extends FieldPluginBase {
                   }
                 }
                 $field_value = (count($field_values) > 1) ? $field_values : reset($field_values);
-                $this->child_arguments[$field_alias]['values'][] = $field_value;
+                $this->childArguments[$field_alias]['values'][] = $field_value;
               }
               else {
-                $this->child_arguments[$field_alias]['values'][] = $value->$field_alias;
+                $this->childArguments[$field_alias]['values'][] = $value->$field_alias;
               }
             }
           }
@@ -263,10 +263,10 @@ class View extends FieldPluginBase {
       }
 
       // If we don't have child arguments we should not try to do any of our magic.
-      if (count($this->child_arguments)) {
-        // Cache the child_view in this object to minize our calls to views_get_view.
-        $this->child_view = views_get_view($child_view_name);
-        $child_view = $this->child_view;
+      if (count($this->childArguments)) {
+        // Cache the childView in this object to minize our calls to views_get_view.
+        $this->childView = views_get_view($child_view_name);
+        $childiew = $this->childView;
         // Set the appropriate display.
         $child_view->access($child_view_display);
 
@@ -283,7 +283,7 @@ class View extends FieldPluginBase {
 
         $argument_ids = array();
 
-        foreach ($this->child_arguments as $child_argument_name => $child_argument) {
+        foreach ($this->childArguments as $child_argument_name => $child_argument) {
           // Work with the arguments on the child view in the order they are
           // specified in our views_field_view field settings.
           $configured_argument = array_shift($configured_arguments);
@@ -302,9 +302,9 @@ class View extends FieldPluginBase {
 
         // Initialize the query object so that we have it to alter.
         // The child view may have been limited but our result set here should not be.
-        $child_view->build_info['query'] = $child_view->query->query();
-        $child_view->build_info['count_query'] = $child_view->query->query(TRUE);
-        $child_view->build_info['query_args'] = $child_view->query->get_where_args();
+        $child_view->buildInfo['query'] = $child_view->query->query();
+        $child_view->buildInfo['count_query'] = $child_view->query->query(TRUE);
+        $child_view->buildInfo['query_args'] = $child_view->query->get_where_args();
         // Execute the query to retrieve the results.
         $child_view->execute();
 
@@ -312,7 +312,7 @@ class View extends FieldPluginBase {
         // so that it can be identified later.
         foreach ($argument_ids as $child_argument_name => $argument_id) {
           $child_alias = (isset($child_view->field[$argument_id]->field_alias) && $child_view->field[$argument_id]->field_alias !== 'unknown') ? $child_view->field[$argument_id]->field_alias : $child_view->field[$argument_id]->real_field;
-          $this->child_arguments[$child_argument_name]['child_view_field_alias'] = $child_alias;
+          $this->childArguments[$child_argument_name]['childView_field_alias'] = $child_alias;
         }
         $results = $child_view->result;
 
@@ -320,15 +320,15 @@ class View extends FieldPluginBase {
         // Loop through the results from the main view so that we can cache the results
         // relevant to each row.
         foreach ($values as $value) {
-          // Add an element to the child_view_results array for each of the rows keyed by this view's base_field.
-          $this->child_view_results[$value->{$this->view->base_field}] = array();
-          $child_view_result_row =& $this->child_view_results[$value->{$this->view->base_field}];
+          // Add an element to the childViewResults array for each of the rows keyed by this view's base_field.
+          $this->childViewResults[$value->{$this->view->base_field}] = array();
+          $child_view_result_row =& $this->childViewResults[$value->{$this->view->base_field}];
           // Loop through the actual result set looking for matches to these arguments.
           foreach ($results as $result) {
             // Assume that we have a matching item until we know that we don't.
             $matching_item = TRUE;
             // Check each argument that we care about to ensure that it matches.
-            foreach ($this->child_arguments as $child_argument_field_alias => $child_argument) {
+            foreach ($this->childArguments as $child_argument_field_alias => $child_argument) {
               // If one of our arguments does not match the argument of this field,
               // do not add it to this row.
               if (isset($value->$child_argument_field_alias) && $value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
@@ -341,12 +341,12 @@ class View extends FieldPluginBase {
           }
 
           // Make a best effort attempt at paging.
-          if (isset($this->child_view->pager['items_per_page'])) {
-            $item_limit = $this->child_view->pager['items_per_page'];
+          if (isset($this->childView->pager['items_per_page'])) {
+            $item_limit = $this->childView->pager['items_per_page'];
             // If the item limit exists but is set to zero, do not split up the results.
             if ($item_limit != 0) {
               $results = array_chunk($results, $item_limit);
-              $offset = (isset($this->child_view->pager['offset']) ? $this->child_view->pager['offset'] : 0);
+              $offset = (isset($this->childView->pager['offset']) ? $this->childView->pager['offset'] : 0);
               $results = $results[$offset];
             }
           }
@@ -355,8 +355,8 @@ class View extends FieldPluginBase {
 
         // We have essentially built and executed the child view member of this view.
         // Set it accordingly so that it is not rebuilt during the rendering of each row below.
-        $this->child_view->built = TRUE;
-        $this->child_view->executed = TRUE;
+        $this->childView->built = TRUE;
+        $this->childView->executed = TRUE;
       }
     }
   }
@@ -427,12 +427,12 @@ class View extends FieldPluginBase {
       }
       // Verify we have a child view (if there were no arguments specified we
       // won't have one), and that query aggregation was enabled.
-      elseif ($this->child_view && $this->options['view'] && $this->options['query_aggregation']) {
+      elseif ($this->childView && $this->options['view'] && $this->options['query_aggregation']) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
-        $child_view = $this->child_view;
+        $child_view = $this->childView;
         // Only execute and render the view if the user has access.
         if ($child_view->access($this->options['display'])) {
-          $results =  $this->child_view_results[$values->{$this->view->base_field}];
+          $results =  $this->childViewResults[$values->{$this->view->base_field}];
           // If there are no results and hide_empty is set.
           if (empty($results) && $this->options['hide_empty']) {
             $output = '';
