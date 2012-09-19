@@ -166,7 +166,7 @@ class View extends FieldPluginBase {
         '#title' => t('Replacement patterns'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
-        '#value' => $this->get_token_info(),
+        '#value' => $this->getTokenInfo(),
         '#fieldset' => 'views_field_view',
       );
 
@@ -217,13 +217,13 @@ class View extends FieldPluginBase {
       $child_view_display = $this->options['display'];
 
       // Add each argument token configured for this view_field.
-      foreach ($this->split_tokens($this->options['arguments']) as $token) {
+      foreach ($this->splitTokens($this->options['arguments']) as $token) {
         // Remove the brackets around the token etc..
-        $token_info = $this->get_token_argument($token);
+        $token_info = $this->getTokenArgument($token);
         $argument = $token_info['arg'];
         $token_type = $token_info['type'];
         // Collect all of the values that we intend to use as arguments of our single query.
-        // TODO: Get this to be handled by get_token_value() method too.
+        // TODO: Get this to be handled by getTokenValue() method too.
         if (isset($this->view->field[$argument])) {
           if (isset($this->view->field[$argument]->field_info)) {
             $field_alias = 'field_' . $this->view->field[$argument]->field;
@@ -380,8 +380,8 @@ class View extends FieldPluginBase {
         // Only perform this loop if there are actually arguments present.
         if (!empty($this->options['arguments'])) {
           // Create array of tokens.
-          foreach ($this->split_tokens($this->options['arguments']) as $token) {
-            $args[] = $this->get_token_value($token, $values, $this->view);
+          foreach ($this->splitTokens($this->options['arguments']) as $token) {
+            $args[] = $this->getTokenValue($token, $values, $this->view);
           }
         }
 
@@ -477,8 +477,8 @@ class View extends FieldPluginBase {
    *  An array of raw argument values, returned in the same order as the token
    *  were passed in.
    */
-  function get_token_value($token, $values, $view) {
-    $token_info = $this->get_token_argument($token);
+  function getTokenValue($token, $values, $view) {
+    $token_info = $this->getTokenArgument($token);
     $arg = $token_info['arg'];
     $token_type = $token_info['type'];
 
@@ -525,7 +525,7 @@ class View extends FieldPluginBase {
    * @return array
    *  An array containing type and arg (As described above).
    */
-  function get_token_argument($token) {
+  function getTokenArgument($token) {
     // Trim whitespace and remove the brackets around the token.
     $argument = trim(trim($token), '[]');
     $diff = ltrim($argument, '!..%');
@@ -553,7 +553,7 @@ class View extends FieldPluginBase {
    * @return array
    *   An array of split token strings.
    */
-  function split_tokens($token_string) {
+  function splitTokens($token_string) {
     return preg_split('/,|\//', $token_string);
   }
 
@@ -563,7 +563,7 @@ class View extends FieldPluginBase {
    * @return string
    *   A full HTML string, containing a list of available tokens.
    */
-  public function get_token_info() {
+  public function getTokenInfo() {
     // Get a list of the available fields and arguments for token replacement.
     $options = array();
 

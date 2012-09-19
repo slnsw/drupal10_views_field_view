@@ -65,11 +65,11 @@ class ViewFieldTest extends DrupalWebTestCase {
    */
   function testNormalView() {
     // Get the child view and add it to the database, so it can be used later.
-    $child_view = $this->view_child_normal();
+    $child_view = $this->viewChildNormal();
     $child_view->save();
     views_invalidate_cache();
 
-    $parent_view = $this->view_parent_normal();
+    $parent_view = $this->viewParentNormal();
     $parent_view->preview();
 
 
@@ -91,32 +91,32 @@ class ViewFieldTest extends DrupalWebTestCase {
     $this->assertTrue(is_object($field_handler));
 
     // Test the split_tokens() method.
-    $result = $field_handler->split_tokens('[!uid],[%nid]');
+    $result = $field_handler->splitTokens('[!uid],[%nid]');
     $expected = array('[!uid]', '[%nid]');
     $this->assertEqual($result, $expected, 'The token string has been split correctly (",").');
 
-    $result = $field_handler->split_tokens('[!uid]/[%nid]');
+    $result = $field_handler->splitTokens('[!uid]/[%nid]');
     $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
 
-    $result = $field_handler->split_tokens('[uid]/[nid]');
+    $result = $field_handler->splitTokens('[uid]/[nid]');
     $expected = array('[uid]', '[nid]');
     $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
 
     // Test the get_token_argument() method.
-    $result = $field_handler->get_token_argument('[!uid]');
+    $result = $field_handler->getTokenArgument('[!uid]');
     $expected = array('type' => '!', 'arg' => 'uid');
     $this->assertEqual($result, $expected, 'Correct token argument info processed ("!").');
 
-    $result = $field_handler->get_token_argument('[%uid]');
+    $result = $field_handler->getTokenArgument('[%uid]');
     $expected = array('type' => '%', 'arg' => 'uid');
     $this->assertEqual($result, $expected, 'Correct token argument info processed ("%").');
 
-    $result = $field_handler->get_token_argument('[uid]');
+    $result = $field_handler->getTokenArgument('[uid]');
     $expected = array('type' => '', 'arg' => 'uid');
     $this->assertEqual($result, $expected, 'Correct token argument info processed.');
 
     // Test the token values from a view.
-    $view = $this->view_child_normal();
+    $view = $this->viewChildNormal();
     $view->execute();
     $results = $view->result;
 
@@ -134,7 +134,7 @@ class ViewFieldTest extends DrupalWebTestCase {
       );
       // @todo Test the last_render % output.
       foreach ($map as $token => $value) {
-        $processed_value = $field_handler->get_token_value($token, $values, $view);
+        $processed_value = $field_handler->getTokenValue($token, $values, $view);
         $this->assertIdentical($value, $processed_value, format_string('Expected @token token output', array('@token' => $token)));
       }
     }
@@ -151,7 +151,7 @@ class ViewFieldTest extends DrupalWebTestCase {
    * @see viewsFieldViewTestCase::testNormalView
    * @return view
    */
-  function view_child_normal() {
+  function viewChildNormal() {
     $view = new view;
     $view->name = 'test_vfv_child_normal';
     $view->description = '';
@@ -208,7 +208,7 @@ class ViewFieldTest extends DrupalWebTestCase {
    * @see viewsFieldViewTestCase::testNormalView
    * @return view
    */
-  function view_parent_normal() {
+  function viewParentNormal() {
     $view = new view;
     $view->name = 'test_vfv_parent_normal';
     $view->description = '';
