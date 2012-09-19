@@ -14,12 +14,4 @@ function views_field_view_views_data_alter(&$data) {
     'help' => t('Embed a view as a field. This can cause slow performance, so enable some caching.'),
     'id' => 'view_field',
   );
-  $data['views']['view_field'] = array(
-    'title' => t('View (Views field view)'),
-    'help' => t('Embed a view in an area. This can cause slow performance, so enable some caching.'),
-    'area' => array(
-      'help' => t('Embed a views_field_view field in an area. This can also accept argument tokens.'),
-      'id' => 'view_field',
-    ),
-  );
 }

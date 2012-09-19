@@ -14,7 +14,7 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
 /**
  * @Plugin(
  *   id = "view_field",
- *   title = @Translation("Views field view"),
+ *   title = @Translation("View"),
  *   help = @Translation("Embed a view as a field. This can cause slow performance, so enable some caching."),
  *   base = "view"
  * )
