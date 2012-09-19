@@ -16,8 +16,7 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
  *   id = "view_field",
  *   title = @Translation("Views field view"),
  *   help = @Translation("Embed a view as a field. This can cause slow performance, so enable some caching."),
- *   base = "view",
- *   type = "field"
+ *   base = "view"
  * )
  */
 class View extends FieldPluginBase {
@@ -172,7 +171,7 @@ class View extends FieldPluginBase {
       );
 
       // It doesn't make sense to allow aggregation unless it's a field handler.
-      if (($this->handler_type == 'field')) {
+      if ($this->definition['plugin_type'] == 'field') {
         $form['query_aggregation'] = array(
           '#title' => t('Aggregate queries'),
           '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.
