@@ -2,10 +2,27 @@
 
 /**
  * @file
- * Contains the test for views_field_view
+ * Definition of Drupal\views_field_view\Tests\ViewFieldTest.
  */
 
-class viewsFieldViewTestCase extends DrupalWebTestCase {
+namespace Drupal\views_field_view\Tests;
+
+use Drupal\views_field_view\Plugin\views\field\View as ViewField;
+
+class ViewFieldTest extends DrupalWebTestCase {
+
+  /**
+   * Modules to enable.
+   *
+   * @var array
+   */
+  public static $modules = array('views', 'node', 'views_field_view');
+
+  /**
+   * An array of created nodes.
+   *
+   * @var array
+   */
   public $nodes = array();
 
   public static function getInfo() {
@@ -17,7 +34,7 @@ class viewsFieldViewTestCase extends DrupalWebTestCase {
   }
 
   protected function setUp() {
-    parent::setUp('views', 'node', 'views_field_view');
+    parent::setUp();
 
     $this->nodes = array();
     for ($i = 0; $i <= 10; $i++) {
@@ -70,7 +87,7 @@ class viewsFieldViewTestCase extends DrupalWebTestCase {
    * Test field handler methods in a unit test like way.
    */
   function testFieldHandlerMethods() {
-    $field_handler = new views_field_view_handler_field_view();
+    $field_handler = new ViewField();
     $this->assertTrue(is_object($field_handler));
 
     // Test the split_tokens() method.
