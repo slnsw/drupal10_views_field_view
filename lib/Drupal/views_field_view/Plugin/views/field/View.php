@@ -170,19 +170,16 @@ class View extends FieldPluginBase {
         '#fieldset' => 'views_field_view',
       );
 
-      // It doesn't make sense to allow aggregation unless it's a field handler.
-      if ($this->definition['plugin_type'] == 'field') {
-        $form['query_aggregation'] = array(
-          '#title' => t('Aggregate queries'),
-          '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.
-            This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).
-            <strong>Currently child views must be configured to "Display all results for the specified field" if no contextual filter is present and
-            query aggregation is enabled.</strong>. This may only work on simple views, please test thoroughly.'),
-          '#type' => 'checkbox',
-          '#default_value' => $this->options['query_aggregation'],
-          '#fieldset' => 'views_field_view',
-        );
-      }
+      $form['query_aggregation'] = array(
+        '#title' => t('Aggregate queries'),
+        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.
+          This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).
+          <strong>Currently child views must be configured to "Display all results for the specified field" if no contextual filter is present and
+          query aggregation is enabled.</strong>. This may only work on simple views, please test thoroughly.'),
+        '#type' => 'checkbox',
+        '#default_value' => $this->options['query_aggregation'],
+        '#fieldset' => 'views_field_view',
+      );
 
       // Ensure we're working with a SQL view.
       $views_data = views_fetch_data($view->base_table);
