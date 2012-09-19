@@ -2,11 +2,26 @@
 
 /**
  * @file
- * Views field view field handler class.
- * 
+ * Definition of Drupal\views_field_view\Plugin\views\field\View.
  */
 
-class views_field_view_handler_field_view extends views_handler_field {
+namespace Drupal\views_field_view\Plugin\views\field;
+
+use Drupal\Core\Annotation\Plugin;
+use Drupal\Core\Annotation\Translation;
+use Drupal\views\Plugin\views\field\FieldPluginBase;
+
+/**
+ * @Plugin(
+ *   id = "view_field",
+ *   title = @Translation("Views field view"),
+ *   help = @Translation("Embed a view as a field. This can cause slow performance, so enable some caching."),
+ *   base = "view",
+ *   type = "field"
+ * )
+ */
+class View extends FieldPluginBase {
+
   /**
    * If query aggregation is used, all of the arguments for the child view.
    *
@@ -37,8 +52,8 @@ class views_field_view_handler_field_view extends views_handler_field {
     return FALSE;
   }
 
-  function option_definition() {
-    $options = parent::option_definition();
+  function defineOptions() {
+    $options = parent::defineOptions();
     $options['view'] = array('default' => '');
     $options['display'] = array('default' => 'default');
     $options['arguments'] = array('default' => '');
@@ -47,8 +62,8 @@ class views_field_view_handler_field_view extends views_handler_field {
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
-    parent::options_form($form, $form_state);
+  function buildOptionsForm(&$form, &$form_state) {
+    parent::buildOptionsForm($form, $form_state);
 
     $view_options = views_get_views_as_options(TRUE);
 
@@ -553,9 +568,9 @@ class views_field_view_handler_field_view extends views_handler_field {
     // Get a list of the available fields and arguments for token replacement.
     $options = array();
 
-    foreach ($this->view->display_handler->get_handlers('field') as $field => $handler) {
-      $options[t('Fields')]["[!$field]"] = $handler->ui_name() . ' (' . t('raw') . ')';
-      $options[t('Fields')]["[%$field]"] = $handler->ui_name() . ' (' . t('rendered') . ')';
+    foreach ($this->view->display_handler->getHandlers('field') as $field => $handler) {
+      $options[t('Fields')]["[!$field]"] = $handler->adminLabel() . ' (' . t('raw') . ')';
+      $options[t('Fields')]["[%$field]"] = $handler->adminLabel() . ' (' . t('rendered') . ')';
       // We only use fields up to (and including) this one.
       if ($field == $this->options['id']) {
         break;
@@ -565,9 +580,9 @@ class views_field_view_handler_field_view extends views_handler_field {
     // This lets us prepare the key as we want it printed.
     $count = 0;
 
-    foreach ($this->view->display_handler->get_handlers('argument') as $arg => $handler) {
-      $options[t('Arguments')]['%' . ++$count] = t('@argument title', array('@argument' => $handler->ui_name()));
-      $options[t('Arguments')]['!' . $count] = t('@argument input', array('@argument' => $handler->ui_name()));
+    foreach ($this->view->display_handler->getHandlers('argument') as $arg => $handler) {
+      $options[t('Arguments')]['%' . ++$count] = t('@argument title', array('@argument' => $handler->adminLabel()));
+      $options[t('Arguments')]['!' . $count] = t('@argument input', array('@argument' => $handler->adminLabel()));
     }
 
     // Add replacements for query string parameters.
