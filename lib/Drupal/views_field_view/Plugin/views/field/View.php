@@ -42,7 +42,7 @@ class View extends FieldPluginBase {
    * Note, it should never contain arguments or results because they will be
    * injected into it for rendering.
    */
-  public $child_view = FALSE;
+  public $childView = FALSE;
 
   /**
    * Disable this handler from being used as a 'group by'.
