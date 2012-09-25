@@ -7,9 +7,10 @@
 
 namespace Drupal\views_field_view\Tests;
 
+use Drupal\simpletest\WebTestBase;
 use Drupal\views_field_view\Plugin\views\field\View as ViewField;
 
-class ViewFieldTest extends DrupalWebTestCase {
+class ViewFieldTest extends WebTestBase {
 
   /**
    * Modules to enable.
@@ -152,18 +153,18 @@ class ViewFieldTest extends DrupalWebTestCase {
    * @return view
    */
   function viewChildNormal() {
-    $view = new view;
+    $view = entity_create('view', array());
     $view->name = 'test_vfv_child_normal';
     $view->description = '';
     $view->tag = 'default';
     $view->base_table = 'node';
     $view->human_name = 'test_vfv_child_normal';
-    $view->core = 7;
+    $view->core = 8;
     $view->api_version = '3.0';
     $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
     /* Display: Master */
-    $handler = $view->new_display('default', 'Master', 'default');
+    $handler = $view->newDisplay('default', 'Master', 'default');
     $handler->display->display_options['access']['type'] = 'perm';
     $handler->display->display_options['cache']['type'] = 'none';
     $handler->display->display_options['query']['type'] = 'views_query';
@@ -200,7 +201,7 @@ class ViewFieldTest extends DrupalWebTestCase {
     $handler->display->display_options['arguments']['nid']['break_phrase'] = 1;
     $handler->display->display_options['arguments']['nid']['not'] = 0;
 
-    return $view;
+    return $view->getExecutable();
   }
 
   /**
@@ -209,18 +210,18 @@ class ViewFieldTest extends DrupalWebTestCase {
    * @return view
    */
   function viewParentNormal() {
-    $view = new view;
+    $view = entity_create('view', array());
     $view->name = 'test_vfv_parent_normal';
     $view->description = '';
     $view->tag = 'default';
     $view->base_table = 'node';
     $view->human_name = 'test_vfv_parent_normal';
-    $view->core = 7;
+    $view->core = 8;
     $view->api_version = '3.0';
     $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
     /* Display: Master */
-    $handler = $view->new_display('default', 'Master', 'default');
+    $handler = $view->newDisplay('default', 'Master', 'default');
     $handler->display->display_options['access']['type'] = 'perm';
     $handler->display->display_options['cache']['type'] = 'none';
     $handler->display->display_options['query']['type'] = 'views_query';
@@ -288,6 +289,6 @@ class ViewFieldTest extends DrupalWebTestCase {
     $handler->display->display_options['filters']['status']['group'] = 1;
     $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
 
-    return $view;
+    return $view->getExecutable();
   }
 }
