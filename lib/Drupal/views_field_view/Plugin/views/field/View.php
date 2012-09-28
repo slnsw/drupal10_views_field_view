@@ -395,7 +395,7 @@ class View extends FieldPluginBase {
             // Find a proper start value for the ascening pager IDs.
             $start = 0;
             $pager = $view->display_handler->get_option('pager');
-            if (isset($this->query->pager->options)) {
+            if (isset($this->query->pager->options['id'])) {
               $start = (int) $this->query->pager->options['id'];
             }
 
