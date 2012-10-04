@@ -96,10 +96,10 @@ class View extends FieldPluginBase {
       $view = views_get_view($this->options['view']);
 
       $display_options = array();
-      foreach ($view->display as $name => $display) {
+      foreach ($view->storage->display as $name => $display) {
         // Allow to embed a different display as the current one.
-        if ($this->options['view'] != $this->view->name || ($this->view->current_display != $name)) {
-          $display_options[$name] = $display->display_title;
+        if ($this->options['view'] != $this->view->storage->name || ($this->view->current_display != $name)) {
+          $display_options[$name] = $display['display_title'];
         }
       }
 
