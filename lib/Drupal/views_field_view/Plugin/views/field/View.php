@@ -387,14 +387,14 @@ class View extends FieldPluginBase {
 
         // Only execute and render the view if the user has access.
         if ($view->access($this->options['display'])) {
-          $view->set_display($this->options['display']);
+          $view->setDisplay($this->options['display']);
 
-          if ($view->display_handler->use_pager()) {
+          if ($view->display_handler->isPagerEnabled()) {
             // Check whether the pager IDs should be rewritten.
-            $view->init_query();
+            $view->initQuery();
             // Find a proper start value for the ascening pager IDs.
             $start = 0;
-            $pager = $view->display_handler->get_option('pager');
+            $pager = $view->display_handler->getOption('pager');
             if (isset($this->query->pager->options['id'])) {
               $start = (int) $this->query->pager->options['id'];
             }
@@ -403,11 +403,11 @@ class View extends FieldPluginBase {
             // views_plugin_pager::set_current_page works as expected, which is
             // called from view::init_pager()
             $pager['options']['id'] = $start + 1 + $this->view->row_index;
-            $view->display_handler->set_option('pager', $pager);
-            $view->init_pager();
+            $view->display_handler->setOption('pager', $pager);
+            $view->initPager();
           }
 
-          $view->pre_execute($args);
+          $view->preExecute($args);
           $view->execute();
 
           // If there are no results and hide_empty is set.
@@ -438,8 +438,8 @@ class View extends FieldPluginBase {
             // Inject the appropriate result set before rendering the view.
             $child_view->result = $results;
 
-            if (isset($child_view->style_plugin->rendered_fields)) {
-              unset($child_view->style_plugin->rendered_fields);
+            if (isset($child_view->stylePlugin->rendered_fields)) {
+              unset($child_view->stylePlugin->rendered_fields);
             }
 
             $output = $child_view->render();
