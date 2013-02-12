@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of Drupal\views_field_view\Plugin\views\field\View.
+ * Contains \Drupal\views_field_view\Plugin\views\field\View.
  */
 
 namespace Drupal\views_field_view\Plugin\views\field;
@@ -43,16 +43,20 @@ class View extends FieldPluginBase {
    * Note, it should never contain arguments or results because they will be
    * injected into it for rendering.
    */
-  public $childView = FALSE;
+  public $childView;
 
   /**
    * Disable this handler from being used as a 'group by'.
    */
-  function use_string_group_by() {
+  public function use_string_group_by() {
     return FALSE;
   }
 
-  function defineOptions() {
+  /**
+   * [defineOptions description]
+   * @return [type] [description]
+   */
+  protected function defineOptions() {
     $options = parent::defineOptions();
     $options['view'] = array('default' => '');
     $options['display'] = array('default' => 'default');
@@ -62,7 +66,13 @@ class View extends FieldPluginBase {
     return $options;
   }
 
-  function buildOptionsForm(&$form, &$form_state) {
+  /**
+   * [buildOptionsForm description]
+   * @param  [type] $form       [description]
+   * @param  [type] $form_state [description]
+   * @return [type]             [description]
+   */
+  public function buildOptionsForm(&$form, &$form_state) {
     parent::buildOptionsForm($form, $form_state);
 
     $view_options = views_get_views_as_options(TRUE);
@@ -90,16 +100,17 @@ class View extends FieldPluginBase {
 
     // If there is no view set, use the first one for now.
     if (count($view_options) && empty($this->options['view'])) {
-      $this->options['view'] = reset(array_keys($view_options));
+      $new_options = array_keys($view_options);
+      $this->options['view'] = reset($new_options);
     }
 
     if ($this->options['view']) {
       $view = views_get_view($this->options['view']);
 
       $display_options = array();
-      foreach ($view->storage->display as $name => $display) {
+      foreach ($view->storage->get('display') as $name => $display) {
         // Allow to embed a different display as the current one.
-        if ($this->options['view'] != $this->view->storage->name || ($this->view->current_display != $name)) {
+        if ($this->options['view'] != $this->view->storage->id() || ($this->view->current_display != $name)) {
           $display_options[$name] = $display['display_title'];
         }
       }
@@ -120,7 +131,7 @@ class View extends FieldPluginBase {
 
       // Provide a way to directly access the views edit link of the child view.
       // Don't show this link if the current view is the selected child view.
-      if ($this->options['view'] && $this->options['display'] && ($this->view->name != $this->options['view'])) {
+      if ($this->options['view'] && $this->options['display'] && ($this->view->storage->id() != $this->options['view'])) {
         // use t() here, and set HTML on #link options.
         $link_text = t('Edit "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
         $form['view_edit'] = array(
@@ -181,18 +192,16 @@ class View extends FieldPluginBase {
         '#default_value' => $this->options['query_aggregation'],
         '#fieldset' => 'views_field_view',
       );
-
-      // Ensure we're working with a SQL view.
-      $views_data = views_fetch_data($view->base_table);
-      if ($views_data['table']['base']['query class'] == 'views_query') {
-        $form['query_aggregation']['#disabled'] = TRUE;
-      }
     }
 
     $form['alter']['#access'] = FALSE;
   }
 
-  function query() {
+  /**
+   * [query description]
+   * @return [type] [description]
+   */
+  public function query() {
     $this->add_additional_fields();
   }
 
@@ -205,7 +214,7 @@ class View extends FieldPluginBase {
    * @param array $values
    *   An array of all objects returned from the query.
    */
-  function pre_render(&$values) {
+  public function pre_render(&$values) {
     // Only act if we are attempting to aggregate all of the field
     // instances into a single query.
     if ($this->options['view'] && $this->options['query_aggregation']) {
@@ -359,13 +368,13 @@ class View extends FieldPluginBase {
     }
   }
 
-  function render($values) {
+  /**
+   * [render description]
+   * @param  [type] $values [description]
+   * @return [type]         [description]
+   */
+  public function render($values) {
     $output = NULL;
-    // If it's not a field handler and there are no values
-    // Get the first result row from the view and use that.
-    if (($this->handler_type !== 'field') && empty($values) && isset($this->view->result)) {
-      $values = reset($this->view->result);
-    }
 
     static $running = array();
     // Protect against the evil / recursion.
@@ -475,7 +484,7 @@ class View extends FieldPluginBase {
    *  An array of raw argument values, returned in the same order as the token
    *  were passed in.
    */
-  function getTokenValue($token, $values, $view) {
+  public function getTokenValue($token, $values, $view) {
     $token_info = $this->getTokenArgument($token);
     $arg = $token_info['arg'];
     $token_type = $token_info['type'];
@@ -523,7 +532,7 @@ class View extends FieldPluginBase {
    * @return array
    *  An array containing type and arg (As described above).
    */
-  function getTokenArgument($token) {
+  public function getTokenArgument($token) {
     // Trim whitespace and remove the brackets around the token.
     $argument = trim(trim($token), '[]');
     $diff = ltrim($argument, '!..%');
@@ -551,7 +560,7 @@ class View extends FieldPluginBase {
    * @return array
    *   An array of split token strings.
    */
-  function splitTokens($token_string) {
+  public function splitTokens($token_string) {
     return preg_split('/,|\//', $token_string);
   }
 
@@ -623,4 +632,4 @@ class View extends FieldPluginBase {
     return $output;
   }
 
-} // views_field_view_handler_field_view.
+}

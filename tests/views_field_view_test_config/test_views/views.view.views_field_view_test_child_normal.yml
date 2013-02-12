@@ -1,0 +1,43 @@
+base_field: id
+base_table: views_test_data
+core: 8.x
+description: ''
+status: '1'
+display:
+  default:
+    display_plugin: default
+    id: default
+    display_title: Master
+    position: ''
+    display_options:
+      access:
+        type: none
+      cache:
+        type: none
+      query:
+        type: views_query
+      exposed_form:
+        type: basic
+      pager:
+        type: full
+      style:
+        type: default
+      row:
+        type: fields
+      fields:
+        id:
+          table: views_test_data
+          field: id
+          id: id
+        name:
+          field: name
+          id: name
+          relationship: none
+          table: views_test_data
+          plugin_id: string
+      filters: {  }
+      sorts: {  }
+human_name: views_field_view_test_child_normal
+module: views_field_view
+id: views_field_view_test_child_normal
+tag: ''
