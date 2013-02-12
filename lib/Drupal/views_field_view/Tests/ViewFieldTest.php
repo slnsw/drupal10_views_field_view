@@ -8,7 +8,6 @@
 namespace Drupal\views_field_view\Tests;
 
 use Drupal\simpletest\WebTestBase;
-use Drupal\views_field_view\Plugin\views\field\View as ViewField;
 
 class ViewFieldTest extends WebTestBase {
 
@@ -64,7 +63,7 @@ class ViewFieldTest extends WebTestBase {
    * @todo
    * Test normal view embedding.
    */
-  function testNormalView() {
+  public function testNormalView() {
     // Get the child view and add it to the database, so it can be used later.
     $child_view = $this->viewChildNormal();
     $child_view->save();
@@ -84,38 +83,7 @@ class ViewFieldTest extends WebTestBase {
     // Sadly it's impossible to check the actual result of the child view, because the object is not saved.
   }
 
-  /**
-   * Test field handler methods in a unit test like way.
-   */
-  function testFieldHandlerMethods() {
-    $field_handler = new ViewField();
-    $this->assertTrue(is_object($field_handler));
-
-    // Test the split_tokens() method.
-    $result = $field_handler->splitTokens('[!uid],[%nid]');
-    $expected = array('[!uid]', '[%nid]');
-    $this->assertEqual($result, $expected, 'The token string has been split correctly (",").');
-
-    $result = $field_handler->splitTokens('[!uid]/[%nid]');
-    $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
-
-    $result = $field_handler->splitTokens('[uid]/[nid]');
-    $expected = array('[uid]', '[nid]');
-    $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
-
-    // Test the get_token_argument() method.
-    $result = $field_handler->getTokenArgument('[!uid]');
-    $expected = array('type' => '!', 'arg' => 'uid');
-    $this->assertEqual($result, $expected, 'Correct token argument info processed ("!").');
-
-    $result = $field_handler->getTokenArgument('[%uid]');
-    $expected = array('type' => '%', 'arg' => 'uid');
-    $this->assertEqual($result, $expected, 'Correct token argument info processed ("%").');
-
-    $result = $field_handler->getTokenArgument('[uid]');
-    $expected = array('type' => '', 'arg' => 'uid');
-    $this->assertEqual($result, $expected, 'Correct token argument info processed.');
-
+  public function testTokenReplacement() {
     // Test the token values from a view.
     $view = $this->viewChildNormal();
     $view->execute();

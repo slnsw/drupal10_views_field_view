@@ -13,10 +13,11 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
 
 /**
  * @Plugin(
- *   id = "view_field",
+ *   id = "views_field_view_field",
  *   title = @Translation("View"),
  *   help = @Translation("Embed a view as a field. This can cause slow performance, so enable some caching."),
- *   base = "view"
+ *   base = "view",
+ *   module = "views_field_view"
  * )
  */
 class View extends FieldPluginBase {
@@ -25,7 +26,7 @@ class View extends FieldPluginBase {
    * If query aggregation is used, all of the arguments for the child view.
    *
    * This is a multidimensional array containing field_aliases for the argument's
-   * fields and containing a linear array of all of the results to be used as 
+   * fields and containing a linear array of all of the results to be used as
    * arguments in various fields.
    */
   public $childArguments = array();
@@ -154,8 +155,8 @@ class View extends FieldPluginBase {
 
       $form['arguments'] = array(
         '#title' => t('Contextual filters'),
-        '#description' => t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view. 
-          See below list of available replacement tokens. Static values are also be passed to child views if they do not match a token format. 
+        '#description' => t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view.
+          See below list of available replacement tokens. Static values are also be passed to child views if they do not match a token format.
           You could pass static ID\'s or taxonomy terms in this way. E.g. 123 or "my taxonomy term".'),
         '#type' => 'textfield',
         '#default_value' => $this->options['arguments'],
@@ -464,12 +465,12 @@ class View extends FieldPluginBase {
 
   /**
    * Get field values from tokens.
-   * 
+   *
    * @param string $token
    *  token string. E.g. explode(',', $this->options['args']);
    * @param View $view
    *  Full view object to get token values from.
-   * 
+   *
    * @return array
    *  An array of raw argument values, returned in the same order as the token
    *  were passed in.
@@ -592,13 +593,13 @@ class View extends FieldPluginBase {
     $this->document_self_tokens($options[t('Fields')]);
 
     // Default text.
-    $output = '<p>' . t('You must add some additional fields to this display before using this field. 
-      These fields may be marked as <em>Exclude from display</em> if you prefer. Note that due to rendering order, 
+    $output = '<p>' . t('You must add some additional fields to this display before using this field.
+      These fields may be marked as <em>Exclude from display</em> if you prefer. Note that due to rendering order,
       you cannot use fields that come after this field; if you need a field not listed here, rearrange your fields.') . '</p>';
 
     // We have some options, so make a list.
     if (!empty($options)) {
-      $output = '<p>' . t('The following tokens are available for this field. Note that due to rendering order, 
+      $output = '<p>' . t('The following tokens are available for this field. Note that due to rendering order,
         you cannot use fields that come after this field; if you need a field that is not listed here, re-arrange your fields.') . '</p>';
 
       foreach (array_keys($options) as $type) {
@@ -616,7 +617,7 @@ class View extends FieldPluginBase {
       }
     }
 
-    $output .= '<p><em>' . t('Using rendered (%) tokens can cause unexpected behaviour, as this will use the last output of the field. 
+    $output .= '<p><em>' . t('Using rendered (%) tokens can cause unexpected behaviour, as this will use the last output of the field.
       This could be re written output also. If no prefix is used in the token pattern, "!" will be used as a default.') . '</em></p>';
 
     return $output;
