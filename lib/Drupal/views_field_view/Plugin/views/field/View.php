@@ -23,54 +23,26 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
 class View extends FieldPluginBase {
 
   /**
-   * If query aggregation is used, all of the arguments for the child view.
-   *
-   * This is a multidimensional array containing field_aliases for the argument's
-   * fields and containing a linear array of all of the results to be used as
-   * arguments in various fields.
-   */
-  public $childArguments = array();
-
-  /**
-   * If query aggregation is used, this attribute contains an array of the results
-   * of the aggregated child views.
-   */
-  public $childViewResults = array();
-
-  /**
-   * If query aggregation is enabled, one instance of the child view to be reused.
-   *
-   * Note, it should never contain arguments or results because they will be
-   * injected into it for rendering.
-   */
-  public $childView;
-
-  /**
-   * Disable this handler from being used as a 'group by'.
+   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::use_string_group_by().
    */
   public function use_string_group_by() {
     return FALSE;
   }
 
   /**
-   * [defineOptions description]
-   * @return [type] [description]
+   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::defineOptions().
    */
   protected function defineOptions() {
     $options = parent::defineOptions();
     $options['view'] = array('default' => '');
     $options['display'] = array('default' => 'default');
     $options['arguments'] = array('default' => '');
-    $options['query_aggregation'] = array('default' => FALSE, 'bool' => TRUE);
 
     return $options;
   }
 
   /**
-   * [buildOptionsForm description]
-   * @param  [type] $form       [description]
-   * @param  [type] $form_state [description]
-   * @return [type]             [description]
+   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::buildOptionsForm().
    */
   public function buildOptionsForm(&$form, &$form_state) {
     parent::buildOptionsForm($form, $form_state);
@@ -131,7 +103,7 @@ class View extends FieldPluginBase {
 
       // Provide a way to directly access the views edit link of the child view.
       // Don't show this link if the current view is the selected child view.
-      if ($this->options['view'] && $this->options['display'] && ($this->view->storage->id() != $this->options['view'])) {
+      if (!empty($this->options['view']) && !empty($this->options['display']) && ($this->view->storage->id() != $this->options['view'])) {
         // use t() here, and set HTML on #link options.
         $link_text = t('Edit "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
         $form['view_edit'] = array(
@@ -181,197 +153,20 @@ class View extends FieldPluginBase {
         '#value' => $this->getTokenInfo(),
         '#fieldset' => 'views_field_view',
       );
-
-      $form['query_aggregation'] = array(
-        '#title' => t('Aggregate queries'),
-        '#description' => t('Views Field View usually runs a separate query for each instance of this field on each row and that can mean a lot of queries.
-          This option attempts to aggregate these queries into one query per instance of this field (regardless of how many rows are displayed).
-          <strong>Currently child views must be configured to "Display all results for the specified field" if no contextual filter is present and
-          query aggregation is enabled.</strong>. This may only work on simple views, please test thoroughly.'),
-        '#type' => 'checkbox',
-        '#default_value' => $this->options['query_aggregation'],
-        '#fieldset' => 'views_field_view',
-      );
     }
 
     $form['alter']['#access'] = FALSE;
   }
 
   /**
-   * [query description]
-   * @return [type] [description]
+   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::query().
    */
   public function query() {
     $this->add_additional_fields();
   }
 
   /**
-   * Run before any fields are rendered.
-   *
-   * This gives the handlers some time to set up before any handler has
-   * been rendered.
-   *
-   * @param array $values
-   *   An array of all objects returned from the query.
-   */
-  public function pre_render(&$values) {
-    // Only act if we are attempting to aggregate all of the field
-    // instances into a single query.
-    if ($this->options['view'] && $this->options['query_aggregation']) {
-      // Note: Unlike render, pre_render will be run exactly once per
-      // views_field_view field (not once for each row).
-      $child_view_name = $this->options['view'];
-      $child_view_display = $this->options['display'];
-
-      // Add each argument token configured for this view_field.
-      foreach ($this->splitTokens($this->options['arguments']) as $token) {
-        // Remove the brackets around the token etc..
-        $token_info = $this->getTokenArgument($token);
-        $argument = $token_info['arg'];
-        $token_type = $token_info['type'];
-        // Collect all of the values that we intend to use as arguments of our single query.
-        // TODO: Get this to be handled by getTokenValue() method too.
-        if (isset($this->view->field[$argument])) {
-          if (isset($this->view->field[$argument]->field_info)) {
-            $field_alias = 'field_' . $this->view->field[$argument]->field;
-            $field_key = key($this->view->field[$argument]->field_info['columns']);
-          }
-          elseif (isset($this->view->field[$argument]->field_alias)) {
-            $field_alias = $this->view->field[$argument]->field_alias;
-            $field_key = 'value';
-          }
-
-          foreach ($values as $value) {
-            if (isset($value->$field_alias)) {
-              $this->childArguments[$field_alias]['argument_name'] = $field_alias;
-
-              if (is_array($value->$field_alias)) {
-                $field_values = array();
-
-                foreach ($value->$field_alias as $field_item) {
-                  switch ($token_type) {
-                    case '%':
-                      $field_values[] = $field_item['rendered']['#markup'];
-                    break;
-                    case '!':
-                    default:
-                      $field_values[] = $field_item['raw'][$field_key];
-                  }
-                }
-                $field_value = (count($field_values) > 1) ? $field_values : reset($field_values);
-                $this->childArguments[$field_alias]['values'][] = $field_value;
-              }
-              else {
-                $this->childArguments[$field_alias]['values'][] = $value->$field_alias;
-              }
-            }
-          }
-        }
-      }
-
-      // If we don't have child arguments we should not try to do any of our magic.
-      if (count($this->childArguments)) {
-        // Cache the childView in this object to minize our calls to views_get_view.
-        $this->childView = views_get_view($child_view_name);
-        $childiew = $this->childView;
-        // Set the appropriate display.
-        $child_view->access($child_view_display);
-
-        // Find the arguments on the child view that we're going to need if the
-        // arguments have been overridden.
-        foreach ($child_view->display['default']->display_options['arguments'] as $argument_name => $argument_value) {
-          if (isset($child_view->display[$child_view_display]->display_options['arguments'][$argument_name])) {
-            $configured_arguments[$argument_name] = $child_view->display[$child_view_display]->display_options['arguments'][$argument_name];
-          }
-          else {
-            $configured_arguments[$argument_name] = $child_view->display['default']->display_options['arguments'][$argument_name];
-          }
-        }
-
-        $argument_ids = array();
-
-        foreach ($this->childArguments as $child_argument_name => $child_argument) {
-          // Work with the arguments on the child view in the order they are
-          // specified in our views_field_view field settings.
-          $configured_argument = array_shift($configured_arguments);
-          // To be able to later split up our results among the appropriate rows,
-          // we need to add whatever argument fields we're using to the query.
-          $argument_ids[$child_argument_name] = $child_view->add_item($child_view_display, 'field', $configured_argument['table'], $configured_argument['field'], array('exclude' => TRUE));
-
-          if (isset($child_view->pager['items_per_page'])) {
-            $child_view->pager['items_per_page'] = 0;
-          }
-
-          $child_view->build();
-          // Add the WHERE IN clause to this query.
-          $child_view->query->add_where(0, $configured_argument['table'] . '.' . $configured_argument['field'], $child_argument['values']);
-        }
-
-        // Initialize the query object so that we have it to alter.
-        // The child view may have been limited but our result set here should not be.
-        $child_view->buildInfo['query'] = $child_view->query->query();
-        $child_view->buildInfo['count_query'] = $child_view->query->query(TRUE);
-        $child_view->buildInfo['query_args'] = $child_view->query->get_where_args();
-        // Execute the query to retrieve the results.
-        $child_view->execute();
-
-        // Now that the query has run, we need to get the field alias for each argument field
-        // so that it can be identified later.
-        foreach ($argument_ids as $child_argument_name => $argument_id) {
-          $child_alias = (isset($child_view->field[$argument_id]->field_alias) && $child_view->field[$argument_id]->field_alias !== 'unknown') ? $child_view->field[$argument_id]->field_alias : $child_view->field[$argument_id]->real_field;
-          $this->childArguments[$child_argument_name]['childView_field_alias'] = $child_alias;
-        }
-        $results = $child_view->result;
-
-        // Finally: Cache the results so that they're easily accessible for the render function.
-        // Loop through the results from the main view so that we can cache the results
-        // relevant to each row.
-        foreach ($values as $value) {
-          // Add an element to the childViewResults array for each of the rows keyed by this view's base_field.
-          $this->childViewResults[$value->{$this->view->base_field}] = array();
-          $child_view_result_row =& $this->childViewResults[$value->{$this->view->base_field}];
-          // Loop through the actual result set looking for matches to these arguments.
-          foreach ($results as $result) {
-            // Assume that we have a matching item until we know that we don't.
-            $matching_item = TRUE;
-            // Check each argument that we care about to ensure that it matches.
-            foreach ($this->childArguments as $child_argument_field_alias => $child_argument) {
-              // If one of our arguments does not match the argument of this field,
-              // do not add it to this row.
-              if (isset($value->$child_argument_field_alias) && $value->$child_argument_field_alias != $result->{$child_argument['child_view_field_alias']}) {
-                $matching_item = FALSE;
-              }
-            }
-            if ($matching_item) {
-              $child_view_result_row[] = $result;
-            }
-          }
-
-          // Make a best effort attempt at paging.
-          if (isset($this->childView->pager['items_per_page'])) {
-            $item_limit = $this->childView->pager['items_per_page'];
-            // If the item limit exists but is set to zero, do not split up the results.
-            if ($item_limit != 0) {
-              $results = array_chunk($results, $item_limit);
-              $offset = (isset($this->childView->pager['offset']) ? $this->childView->pager['offset'] : 0);
-              $results = $results[$offset];
-            }
-          }
-          unset($child_view_result_row);
-        }
-
-        // We have essentially built and executed the child view member of this view.
-        // Set it accordingly so that it is not rebuilt during the rendering of each row below.
-        $this->childView->built = TRUE;
-        $this->childView->executed = TRUE;
-      }
-    }
-  }
-
-  /**
-   * [render description]
-   * @param  [type] $values [description]
-   * @return [type]         [description]
+   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::render().
    */
   public function render($values) {
     $output = NULL;
