@@ -189,7 +189,7 @@ class View extends FieldPluginBase {
     // Protect against the evil / recursion.
     // Set the variable for yourself, this is not for the normal "user".
     if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
-      if ($this->options['view'] && !$this->options['query_aggregation']) {
+      if (!empty($this->options['view'])) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $args = array();
 
@@ -240,32 +240,6 @@ class View extends FieldPluginBase {
         }
 
         $running[$this->options['view']][$this->options['display']] = FALSE;
-      }
-      // Verify we have a child view (if there were no arguments specified we
-      // won't have one), and that query aggregation was enabled.
-      elseif ($this->childView && $this->options['view'] && $this->options['query_aggregation']) {
-        $running[$this->options['view']][$this->options['display']] = TRUE;
-        $child_view = $this->childView;
-        // Only execute and render the view if the user has access.
-        if ($child_view->access($this->options['display'])) {
-          $results =  $this->childViewResults[$values->{$this->view->base_field}];
-          // If there are no results and hide_empty is set.
-          if (empty($results) && $this->options['hide_empty']) {
-            $output = '';
-          }
-          else {
-            // Inject the appropriate result set before rendering the view.
-            $child_view->result = $results;
-
-            if (isset($child_view->stylePlugin->rendered_fields)) {
-              unset($child_view->stylePlugin->rendered_fields);
-            }
-
-            $output = $child_view->render();
-          }
-
-          $running[$this->options['view']][$this->options['display']] = FALSE;
-        }
       }
     }
     else {
