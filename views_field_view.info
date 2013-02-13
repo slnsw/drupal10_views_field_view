@@ -1,5 +1,5 @@
 name = Views Field View
-description = 'Embeds a view inside a view as field'
+description = 'Adds a view field handler to embed views inside views.'
 core = 8.x
 
 package = Views

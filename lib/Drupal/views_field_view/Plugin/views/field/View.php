@@ -23,6 +23,20 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
 class View extends FieldPluginBase {
 
   /**
+   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::click_sortable().
+   */
+  public function click_sortable() {
+    return FALSE;
+  }
+
+  /**
+   * Overrides \Drupal\views\Plugin\views\HandlerBase::usesGroupBy().
+   */
+  public function usesGroupBy() {
+    return FALSE;
+  }
+
+  /**
    * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::use_string_group_by().
    */
   public function use_string_group_by() {
