@@ -7,44 +7,39 @@
 
 namespace Drupal\views_field_view\Plugin\views\field;
 
-use Drupal\Core\Annotation\Plugin;
+use Drupal\Component\Annotation\PluginID;
 use Drupal\Core\Annotation\Translation;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
+use Drupal\Component\Utility\String;
 
 /**
- * @Plugin(
- *   id = "views_field_view_field",
- *   title = @Translation("View"),
- *   help = @Translation("Embed a view as a field. This can cause slow performance, so enable some caching."),
- *   base = "view",
- *   module = "views_field_view"
- * )
+ * @PluginID("views_field_view_field")
  */
 class View extends FieldPluginBase {
 
   /**
-   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::click_sortable().
+   * {@inheritdoc}
    */
-  public function click_sortable() {
+  public function clickSortable() {
     return FALSE;
   }
 
   /**
-   * Overrides \Drupal\views\Plugin\views\HandlerBase::usesGroupBy().
+   * {@inheritdoc}
    */
   public function usesGroupBy() {
     return FALSE;
   }
 
   /**
-   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::use_string_group_by().
+   * {@inheritdoc}
    */
-  public function use_string_group_by() {
+  public function useStringGroupBy() {
     return FALSE;
   }
 
   /**
-   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::defineOptions().
+   * {@inheritdoc}
    */
   protected function defineOptions() {
     $options = parent::defineOptions();
@@ -56,7 +51,7 @@ class View extends FieldPluginBase {
   }
 
   /**
-   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::buildOptionsForm().
+   * {@inheritdoc}
    */
   public function buildOptionsForm(&$form, &$form_state) {
     parent::buildOptionsForm($form, $form_state);
@@ -77,7 +72,7 @@ class View extends FieldPluginBase {
       '#default_value' => $this->options['view'],
       '#options' => $view_options,
       '#ajax' => array(
-        'path' => views_ui_build_form_url($form_state),
+        'path' => views_ui_build_form_path($form_state),
       ),
       '#submit' => array('views_ui_config_item_form_submit_temporary'),
       '#executes_submit_callback' => TRUE,
@@ -108,7 +103,7 @@ class View extends FieldPluginBase {
         '#default_value' => $this->options['display'],
         '#options' => $display_options,
         '#ajax' => array(
-          'path' => views_ui_build_form_url($form_state),
+          'path' => views_ui_build_form_path($form_state),
         ),
         '#submit' => array('views_ui_config_item_form_submit_temporary'),
         '#executes_submit_callback' => TRUE,
@@ -173,14 +168,14 @@ class View extends FieldPluginBase {
   }
 
   /**
-   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::query().
+   * {@inheritdoc}
    */
   public function query() {
-    $this->add_additional_fields();
+    $this->addAdditionalFields();
   }
 
   /**
-   * Overrides \Drupal\views\Plugin\views\field\FieldPluginBase::render().
+   * {@inheritdoc}
    */
   public function render($values) {
     $output = NULL;
@@ -208,12 +203,12 @@ class View extends FieldPluginBase {
         if ($view->access($this->options['display'])) {
           $view->setDisplay($this->options['display']);
 
-          if ($view->display_handler->isPagerEnabled()) {
+          if ($view->displayHandler->isPagerEnabled()) {
             // Check whether the pager IDs should be rewritten.
             $view->initQuery();
             // Find a proper start value for the ascening pager IDs.
             $start = 0;
-            $pager = $view->display_handler->getOption('pager');
+            $pager = $view->displayHandler->getOption('pager');
             if (isset($this->query->pager->options['id'])) {
               $start = (int) $this->query->pager->options['id'];
             }
@@ -222,7 +217,7 @@ class View extends FieldPluginBase {
             // views_plugin_pager::set_current_page works as expected, which is
             // called from view::init_pager()
             $pager['options']['id'] = $start + 1 + $this->view->row_index;
-            $view->display_handler->setOption('pager', $pager);
+            $view->displayHandler->setOption('pager', $pager);
             $view->initPager();
           }
 
@@ -280,7 +275,7 @@ class View extends FieldPluginBase {
         break;
         case '!':
         default:
-          $value = $view->field[$arg]->get_value($values);
+          $value = $view->field[$arg]->getValue($values);
         break;
       }
     }
@@ -290,7 +285,7 @@ class View extends FieldPluginBase {
           // Get an array of argument keys. So we can use the index as an
           // identifier.
           $keys = array_keys($view->argument);
-          $value = $view->argument[$keys[$arg - 1]]->get_title();
+          $value = $view->argument[$keys[$arg - 1]]->getTitle();
         break;
         case '!':
         default:
@@ -299,7 +294,7 @@ class View extends FieldPluginBase {
       }
     }
     else {
-      $value = check_plain(trim($token, '\'"'));
+      $value = String::checkPlain(trim($token, '\'"'));
     }
 
     return $value;
@@ -382,7 +377,7 @@ class View extends FieldPluginBase {
       $options[t('Query string')]["[%$param]"] = strip_tags(decode_entities($val));
     }
 
-    $this->document_self_tokens($options[t('Fields')]);
+    $this->documentSelfTokens($options[t('Fields')]);
 
     // Default text.
     $output = '<p>' . t('You must add some additional fields to this display before using this field.

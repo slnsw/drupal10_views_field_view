@@ -37,7 +37,7 @@ display:
           plugin_id: string
       filters: {  }
       sorts: {  }
-human_name: views_field_view_test_child_normal
+label: views_field_view_test_child_normal
 module: views_field_view
 id: views_field_view_test_child_normal
 tag: ''

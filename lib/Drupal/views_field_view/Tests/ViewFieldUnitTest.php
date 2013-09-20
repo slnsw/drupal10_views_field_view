@@ -7,6 +7,8 @@
 
 namespace Drupal\views_field_view\Tests;
 
+use Drupal\Component\Utility\String;
+use Drupal\views\Plugin\ViewsHandlerManager;
 use Drupal\views\Tests\ViewUnitTestBase;
 use Drupal\views\Tests\ViewTestData;
 use Drupal\views_field_view\Plugin\views\field\View as ViewField;
@@ -50,8 +52,8 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
 
     // Check that the child view has the same title as the parent one
     foreach ($parent_view->result as $index => $values) {
-      $name = $parent_view->style_plugin->get_field($index, 'name');
-      $child_view_field = $parent_view->style_plugin->get_field($index, 'view');
+      $name = $parent_view->stylePlugin->getField($index, 'name');
+      $child_view_field = $parent_view->stylePlugin->getField($index, 'view');
       $this->assertContains($name, $child_view_field);
     }
 
@@ -62,7 +64,11 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
    * Test field handler methods in a unit test like way.
    */
   public function testFieldHandlerMethods() {
-    $field_handler = views_get_handler('views', 'view', 'field');
+    $item = array(
+      'table' => 'views',
+      'field' => 'view',
+    );
+    $field_handler = $this->container->get('plugin.manager.views.field')->getHandler($item);
 
     $this->assertTrue($field_handler instanceof ViewField);
 
@@ -115,7 +121,7 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
       // @todo Test the last_render % output.
       foreach ($map as $token => $value) {
         $processed_value = $view->field['view']->getTokenValue($token, $values, $view);
-        $this->assertIdentical($value, $processed_value, format_string('Expected @token token output', array('@token' => $token)));
+        $this->assertIdentical($value, $processed_value, String::format('Expected @token token output', array('@token' => $token)));
       }
     }
   }

@@ -90,7 +90,7 @@ display:
           plugin_id: views_field_view_field
       filters: {  }
       sorts: {  }
-human_name: views_field_view_test_parent_normal
+label: views_field_view_test_parent_normal
 module: views_field_view
 id: views_field_view_test_parent_normal
 tag: ''
