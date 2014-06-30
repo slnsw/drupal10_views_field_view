@@ -56,7 +56,7 @@ class View extends FieldPluginBase {
   public function buildOptionsForm(&$form, &$form_state) {
     parent::buildOptionsForm($form, $form_state);
 
-    $view_options = views_get_views_as_options(TRUE);
+    $view_options = views_get_views_as_ options(TRUE);
 
     $form['views_field_view'] = array(
       '#type' => 'fieldset',
