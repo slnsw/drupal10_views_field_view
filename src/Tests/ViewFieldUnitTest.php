@@ -8,11 +8,16 @@
 namespace Drupal\views_field_view\Tests;
 
 use Drupal\Component\Utility\String;
-use Drupal\views\Plugin\ViewsHandlerManager;
 use Drupal\views\Tests\ViewUnitTestBase;
 use Drupal\views\Tests\ViewTestData;
+use Drupal\views\Views;
 use Drupal\views_field_view\Plugin\views\field\View as ViewField;
 
+/**
+ * Tests the views field view handler methods.
+ *
+ * @group views_field_view
+ */
 class ViewFieldUnitTest extends ViewUnitTestBase {
 
   /**
@@ -29,31 +34,23 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
    */
   public static $testViews = array('views_field_view_test_parent_normal', 'views_field_view_test_child_normal');
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Views field view unit tests',
-      'description' => 'Tests the views field view handler methods.',
-      'group' => 'Views field view'
-    );
-  }
-
   protected function setUp() {
     parent::setUp();
 
-    ViewTestData::importTestViews(get_class($this), array('views_field_view_test_config'));
+    ViewTestData::createTestViews(get_class($this), array('views_field_view_test_config'));
   }
 
   /**
    * Test normal view embedding.
    */
   public function testNormalView() {
-    $parent_view = views_get_view('views_field_view_test_parent_normal');
-    $output = $parent_view->preview();
+    $parent_view = Views::getView('views_field_view_test_parent_normal');
+    $parent_view->preview();
 
     // Check that the child view has the same title as the parent one
     foreach ($parent_view->result as $index => $values) {
-      $name = $parent_view->stylePlugin->getField($index, 'name');
-      $child_view_field = $parent_view->stylePlugin->getField($index, 'view');
+      $name = $parent_view->style_plugin->getField($index, 'name');
+      $child_view_field = $parent_view->style_plugin->getField($index, 'view');
       $this->assertContains($name, $child_view_field);
     }
 
@@ -68,6 +65,7 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
       'table' => 'views',
       'field' => 'view',
     );
+    /** @var ViewField $field_handler */
     $field_handler = $this->container->get('plugin.manager.views.field')->getHandler($item);
 
     $this->assertTrue($field_handler instanceof ViewField);
@@ -103,7 +101,7 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
    */
   public function testTokenReplacement() {
     // Test the token values from a view.
-    $view = views_get_view('views_field_view_test_parent_normal');
+    $view = Views::getView('views_field_view_test_parent_normal');
     $this->executeView($view);
 
     // Add a value to args, just for the purpose of the !1 token to get a value

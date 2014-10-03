@@ -7,13 +7,14 @@
 
 namespace Drupal\views_field_view\Plugin\views\field;
 
-use Drupal\Component\Annotation\PluginID;
-use Drupal\Core\Annotation\Translation;
-use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\Component\Utility\String;
+use Drupal\views\Plugin\views\field\FieldPluginBase;
+use Drupal\views\ResultRow;
+use Drupal\views\Views;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
- * @PluginID("views_field_view_field")
+ * @ViewsField("views_field_view_field")
  */
 class View extends FieldPluginBase {
 
@@ -53,28 +54,27 @@ class View extends FieldPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildOptionsForm(&$form, &$form_state) {
+  public function buildOptionsForm(&$form, FormStateInterface $form_state) {
     parent::buildOptionsForm($form, $form_state);
 
-    $view_options = views_get_views_as_ options(TRUE);
+    $view_options = Views::getViewsAsOptions(TRUE);
 
     $form['views_field_view'] = array(
-      '#type' => 'fieldset',
-      '#title' => t("View settings"),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
+      '#type' => 'details',
+      '#title' => $this->t("View settings"),
+      '#open' => TRUE,
     );
 
     $form['view'] = array(
       '#type' => 'select',
-      '#title' => t('View'),
-      '#description' => t('Select a view to embed.'),
+      '#title' => $this->t('View'),
+      '#description' => $this->t('Select a view to embed.'),
       '#default_value' => $this->options['view'],
       '#options' => $view_options,
       '#ajax' => array(
         'path' => views_ui_build_form_path($form_state),
       ),
-      '#submit' => array('views_ui_config_item_form_submit_temporary'),
+      '#submit' => array(array($this, 'submitTemporaryForm')),
       '#executes_submit_callback' => TRUE,
       '#fieldset' => 'views_field_view',
     );
@@ -86,7 +86,7 @@ class View extends FieldPluginBase {
     }
 
     if ($this->options['view']) {
-      $view = views_get_view($this->options['view']);
+      $view = Views::getView($this->options['view']);
 
       $display_options = array();
       foreach ($view->storage->get('display') as $name => $display) {
@@ -98,14 +98,14 @@ class View extends FieldPluginBase {
 
       $form['display'] = array(
         '#type' => 'select',
-        '#title' => t('Display'),
-        '#description' => t('Select a view display to use.'),
+        '#title' => $this->t('Display'),
+        '#description' => $this->t('Select a view display to use.'),
         '#default_value' => $this->options['display'],
         '#options' => $display_options,
         '#ajax' => array(
           'path' => views_ui_build_form_path($form_state),
         ),
-        '#submit' => array('views_ui_config_item_form_submit_temporary'),
+        '#submit' => array(array($this, 'submitTemporaryForm')),
         '#executes_submit_callback' => TRUE,
         '#fieldset' => 'views_field_view',
       );
@@ -114,15 +114,15 @@ class View extends FieldPluginBase {
       // Don't show this link if the current view is the selected child view.
       if (!empty($this->options['view']) && !empty($this->options['display']) && ($this->view->storage->id() != $this->options['view'])) {
         // use t() here, and set HTML on #link options.
-        $link_text = t('Edit "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
+        $link_text = $this->t('Edit "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
         $form['view_edit'] = array(
           '#type' => 'container',
           '#fieldset' => 'views_field_view',
         );
         $form['view_edit']['view_edit_link'] = array(
-          '#theme' => 'link',
-          '#text' => $link_text,
-          '#path' => 'admin/structure/views/view/' . $this->options['view'] . '/edit/' . $this->options['display'],
+          '#type' => 'link',
+          '#title' => $link_text,
+          '#href' => 'admin/structure/views/view/' . $this->options['view'] . '/edit/' . $this->options['display'],
           '#options' => array(
             'attributes' => array(
               'target' => '_blank',
@@ -139,15 +139,15 @@ class View extends FieldPluginBase {
           '#suffix' => '<span>]</span>',
         );
         $form['view_edit']['description'] = array(
-          '#markup' => t('Use this link to open the current child view\'s edit page in a new window.'),
+          '#markup' => $this->t('Use this link to open the current child view\'s edit page in a new window.'),
           '#prefix' => '<div class="description">',
           '#suffix' => '</div>',
         );
       }
 
       $form['arguments'] = array(
-        '#title' => t('Contextual filters'),
-        '#description' => t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view.
+        '#title' => $this->t('Contextual filters'),
+        '#description' => $this->t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view.
           See below list of available replacement tokens. Static values are also be passed to child views if they do not match a token format.
           You could pass static ID\'s or taxonomy terms in this way. E.g. 123 or "my taxonomy term".'),
         '#type' => 'textfield',
@@ -155,10 +155,8 @@ class View extends FieldPluginBase {
         '#fieldset' => 'views_field_view',
       );
       $form['available_tokens'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Replacement patterns'),
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
+        '#type' => 'details',
+        '#title' => $this->t('Replacement patterns'),
         '#value' => $this->getTokenInfo(),
         '#fieldset' => 'views_field_view',
       );
@@ -177,13 +175,13 @@ class View extends FieldPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function render($values) {
+  public function render(ResultRow $values) {
     $output = NULL;
 
     static $running = array();
     // Protect against the evil / recursion.
     // Set the variable for yourself, this is not for the normal "user".
-    if (empty($running[$this->options['view']][$this->options['display']]) || variable_get('views_field_view_evil', FALSE)) {
+    if (empty($running[$this->options['view']][$this->options['display']]) || \Drupal::config('views_field_view.settings')->get('evil')) {
       if (!empty($this->options['view'])) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $args = array();
@@ -196,19 +194,19 @@ class View extends FieldPluginBase {
           }
         }
 
-        // get view etc… and execute.
-        $view = views_get_view($this->options['view']);
+        // Get view and execute.
+        $view = Views::getView($this->options['view']);
 
         // Only execute and render the view if the user has access.
         if ($view->access($this->options['display'])) {
           $view->setDisplay($this->options['display']);
 
-          if ($view->displayHandler->isPagerEnabled()) {
+          if ($view->display_handler->isPagerEnabled()) {
             // Check whether the pager IDs should be rewritten.
             $view->initQuery();
             // Find a proper start value for the ascening pager IDs.
             $start = 0;
-            $pager = $view->displayHandler->getOption('pager');
+            $pager = $view->display_handler->getOption('pager');
             if (isset($this->query->pager->options['id'])) {
               $start = (int) $this->query->pager->options['id'];
             }
@@ -217,7 +215,7 @@ class View extends FieldPluginBase {
             // views_plugin_pager::set_current_page works as expected, which is
             // called from view::init_pager()
             $pager['options']['id'] = $start + 1 + $this->view->row_index;
-            $view->displayHandler->setOption('pager', $pager);
+            $view->display_handler->setOption('pager', $pager);
             $view->initPager();
           }
 
@@ -238,7 +236,7 @@ class View extends FieldPluginBase {
       }
     }
     else {
-      $output = t('Recursion, stop!');
+      $output = $this->t('Recursion, stop!');
     }
 
     if (!empty($output)) {
@@ -251,32 +249,37 @@ class View extends FieldPluginBase {
   }
 
   /**
-   * Get field values from tokens.
+   * Gets field values from tokens.
    *
    * @param string $token
-   *  token string. E.g. explode(',', $this->options['args']);
+   *  The token string. E.g. explode(',', $this->options['args']);
+   * @param \Drupal\views\ResultRow $values
+   *  The values retrieved from a single row of a view's query result.
    * @param View $view
-   *  Full view object to get token values from.
+   *  The full view object to get token values from.
    *
    * @return array
    *  An array of raw argument values, returned in the same order as the token
    *  were passed in.
    */
-  public function getTokenValue($token, $values, $view) {
+  public function getTokenValue($token, ResultRow $values, $view) {
     $token_info = $this->getTokenArgument($token);
     $arg = $token_info['arg'];
     $token_type = $token_info['type'];
 
-    // Collect all of the values that we intend to use as arguments of our single query.
+    // Collect all of the values that we intend to use as arguments of our
+    // single query.
     if (isset($view->field[$arg])) {
       switch ($token_type) {
         case '%':
           $value = $view->field[$arg]->last_render;
         break;
+
         case '!':
         default:
           $value = $view->field[$arg]->getValue($values);
         break;
+
       }
     }
     elseif (isset($view->args[$arg - 1])) {
@@ -286,11 +289,13 @@ class View extends FieldPluginBase {
           // identifier.
           $keys = array_keys($view->argument);
           $value = $view->argument[$keys[$arg - 1]]->getTitle();
-        break;
+          break;
+
         case '!':
         default:
           $value = $view->args[$arg - 1];
-        break;
+          break;
+
       }
     }
     else {
@@ -349,12 +354,13 @@ class View extends FieldPluginBase {
    *   A full HTML string, containing a list of available tokens.
    */
   public function getTokenInfo() {
+    $output = array();
     // Get a list of the available fields and arguments for token replacement.
     $options = array();
 
     foreach ($this->view->display_handler->getHandlers('field') as $field => $handler) {
-      $options[t('Fields')]["[!$field]"] = $handler->adminLabel() . ' (' . t('raw') . ')';
-      $options[t('Fields')]["[%$field]"] = $handler->adminLabel() . ' (' . t('rendered') . ')';
+      $options[$this->t('Fields')]["[!$field]"] = $handler->adminLabel() . ' (' . $this->t('raw') . ')';
+      $options[$this->t('Fields')]["[%$field]"] = $handler->adminLabel() . ' (' . $this->t('rendered') . ')';
       // We only use fields up to (and including) this one.
       if ($field == $this->options['id']) {
         break;
@@ -365,8 +371,8 @@ class View extends FieldPluginBase {
     $count = 0;
 
     foreach ($this->view->display_handler->getHandlers('argument') as $arg => $handler) {
-      $options[t('Arguments')]['%' . ++$count] = t('@argument title', array('@argument' => $handler->adminLabel()));
-      $options[t('Arguments')]['!' . $count] = t('@argument input', array('@argument' => $handler->adminLabel()));
+      $options[$this->t('Arguments')]['%' . ++$count] = $this->t('@argument title', array('@argument' => $handler->adminLabel()));
+      $options[$this->t('Arguments')]['!' . $count] = $this->t('@argument input', array('@argument' => $handler->adminLabel()));
     }
 
     // Add replacements for query string parameters.
@@ -374,20 +380,13 @@ class View extends FieldPluginBase {
       if (is_array($val)) {
         $val = implode(', ', $val);
       }
-      $options[t('Query string')]["[%$param]"] = strip_tags(decode_entities($val));
+      $options[$this->t('Query string')]["[%$param]"] = strip_tags(decode_entities($val));
     }
 
-    $this->documentSelfTokens($options[t('Fields')]);
-
-    // Default text.
-    $output = '<p>' . t('You must add some additional fields to this display before using this field.
-      These fields may be marked as <em>Exclude from display</em> if you prefer. Note that due to rendering order,
-      you cannot use fields that come after this field; if you need a field not listed here, rearrange your fields.') . '</p>';
+    $this->documentSelfTokens($options[$this->t('Fields')]);
 
     // We have some options, so make a list.
     if (!empty($options)) {
-      $output = '<p>' . t('The following tokens are available for this field. Note that due to rendering order,
-        you cannot use fields that come after this field; if you need a field that is not listed here, re-arrange your fields.') . '</p>';
 
       foreach (array_keys($options) as $type) {
         if (!empty($options[$type])) {
@@ -395,17 +394,32 @@ class View extends FieldPluginBase {
           foreach ($options[$type] as $key => $value) {
             $items[] = $key . ' == ' . $value;
           }
-          $output .= theme('item_list',
-            array(
-              'items' => $items,
-              'type' => $type
-            ));
+          $output = array(
+            '#theme' => 'item_list',
+            '#items' => $items,
+            '#type' => $type,
+            '#prefix' => '<p>' . $this->t('The following tokens are available
+              for this field. Note that due to rendering order, you cannot use
+              fields that come after this field; if you need a field that is not
+              listed here, re-arrange  your fields.') . '</p>',
+            '#suffix' => '<p><em>' . $this->t('Using rendered (%) tokens can
+              cause unexpected behaviour, as this will use the last output of
+              the field. This could be re written output also. If no prefix is
+              used in the token pattern, "!" will be used as a default.') .
+              '</em></p>',
+          );
         }
       }
     }
-
-    $output .= '<p><em>' . t('Using rendered (%) tokens can cause unexpected behaviour, as this will use the last output of the field.
-      This could be re written output also. If no prefix is used in the token pattern, "!" will be used as a default.') . '</em></p>';
+    else {
+      $output = array(
+        '#markup' => '<p>' . $this->t('You must add some additional fields to
+          this display before using this field. These fields may be marked as
+          <em>Exclude from display</em> if you prefer. Note that due to
+          rendering order,you cannot use fields that come after this field; if
+          you need a field not listed here, rearrange your fields.') . '</p>',
+      );
+    }
 
     return $output;
   }
