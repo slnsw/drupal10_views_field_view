@@ -25,7 +25,7 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
    *
    * @var array
    */
-  public static $modules = array('views_field_view', 'views_field_view_test_config');
+  public static $modules = array('views_field_view', 'views_field_view_test_config', 'user');
 
   /**
    * Views to enable.
