@@ -12,6 +12,7 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\Views;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 
 /**
  * @ViewsField("views_field_view_field")
@@ -122,14 +123,16 @@ class View extends FieldPluginBase {
         $form['view_edit']['view_edit_link'] = array(
           '#type' => 'link',
           '#title' => $link_text,
-          '#href' => 'admin/structure/views/view/' . $this->options['view'] . '/edit/' . $this->options['display'],
-          '#options' => array(
+          '#url' => Url::fromRoute('entity.view.edit_display_form', array(
+            'view' => $this->options['view'],
+            'display_id' => $this->options['display'],
+          ), array(
             'attributes' => array(
               'target' => '_blank',
               'class' => array('views-field-view-child-view-edit'),
             ),
             'html' => TRUE,
-          ),
+          )),
           '#attached' => array(
             'css' => array(
               drupal_get_path('module', 'views_field_view') . '/views_field_view.css',
