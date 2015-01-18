@@ -381,7 +381,7 @@ class View extends FieldPluginBase {
       if (is_array($val)) {
         $val = implode(', ', $val);
       }
-      $options[$this->t('Query string')]["[%$param]"] = strip_tags(decode_entities($val));
+      $options[$this->t('Query string')]["[%$param]"] = strip_tags(String::decodeEntities($val));
     }
 
     $this->documentSelfTokens($options[$this->t('Fields')]);
