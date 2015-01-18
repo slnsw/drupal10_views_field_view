@@ -8,16 +8,54 @@
 namespace Drupal\views_field_view\Plugin\views\field;
 
 use Drupal\Component\Utility\String;
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\Views;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @ViewsField("view")
  */
 class View extends FieldPluginBase {
+
+  /**
+   * The configuration object.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  protected $config;
+
+  /**
+   * Constructs a View object.
+   *
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\Core\Config\ImmutableConfig $config
+   *   The configuration object.
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ImmutableConfig $config) {
+    $this->config = $config;
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('config.factory')->get('views_field_view.settings')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -182,7 +220,7 @@ class View extends FieldPluginBase {
     static $running = array();
     // Protect against the evil / recursion.
     // Set the variable for yourself, this is not for the normal "user".
-    if (empty($running[$this->options['view']][$this->options['display']]) || \Drupal::config('views_field_view.settings')->get('evil')) {
+    if (empty($running[$this->options['view']][$this->options['display']]) || $this->config->get('evil')) {
       if (!empty($this->options['view'])) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
         $args = array();
