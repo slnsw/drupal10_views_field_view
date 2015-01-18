@@ -73,7 +73,7 @@ class View extends FieldPluginBase {
       '#default_value' => $this->options['view'],
       '#options' => $view_options,
       '#ajax' => array(
-        'path' => views_ui_build_form_path($form_state),
+        'path' => views_ui_build_form_url($form_state),
       ),
       '#submit' => array(array($this, 'submitTemporaryForm')),
       '#executes_submit_callback' => TRUE,
@@ -104,7 +104,7 @@ class View extends FieldPluginBase {
         '#default_value' => $this->options['display'],
         '#options' => $display_options,
         '#ajax' => array(
-          'path' => views_ui_build_form_path($form_state),
+          'path' => views_ui_build_form_url($form_state),
         ),
         '#submit' => array(array($this, 'submitTemporaryForm')),
         '#executes_submit_callback' => TRUE,
@@ -134,9 +134,7 @@ class View extends FieldPluginBase {
             'html' => TRUE,
           )),
           '#attached' => array(
-            'css' => array(
-              drupal_get_path('module', 'views_field_view') . '/views_field_view.css',
-            ),
+            'library' => array('views_field_view/drupal.views_field_view'),
           ),
           '#prefix' => '<span>[</span>',
           '#suffix' => '<span>]</span>',
@@ -276,12 +274,12 @@ class View extends FieldPluginBase {
       switch ($token_type) {
         case '%':
           $value = $view->field[$arg]->last_render;
-        break;
+          break;
 
         case '!':
         default:
           $value = $view->field[$arg]->getValue($values);
-        break;
+          break;
 
       }
     }
