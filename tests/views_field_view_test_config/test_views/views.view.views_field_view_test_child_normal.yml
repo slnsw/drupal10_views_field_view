@@ -3,6 +3,7 @@ status: true
 dependencies:
   module:
     - views_field_view
+
 id: views_field_view_test_child_normal
 label: views_field_view_test_child_normal
 module: views_field_view
@@ -81,15 +82,6 @@ display:
           hide_empty: false
           empty_zero: false
           hide_alter_empty: true
-          set_precision: false
-          precision: 0
-          decimal: .
-          separator: ','
-          format_plural: 0
-          format_plural_singular: '1'
-          format_plural_plural: '@count'
-          prefix: ''
-          suffix: ''
         name:
           id: name
           table: views_test_data
