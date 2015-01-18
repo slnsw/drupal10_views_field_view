@@ -15,7 +15,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 
 /**
- * @ViewsField("views_field_view_field")
+ * @ViewsField("view")
  */
 class View extends FieldPluginBase {
 
