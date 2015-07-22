@@ -7,7 +7,8 @@
 
 namespace Drupal\views_field_view\Plugin\views\field;
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
@@ -338,7 +339,7 @@ class View extends FieldPluginBase {
       }
     }
     else {
-      $value = String::checkPlain(trim($token, '\'"'));
+      $value = SafeMarkup::checkPlain(trim($token, '\'"'));
     }
 
     return $value;
@@ -419,7 +420,7 @@ class View extends FieldPluginBase {
       if (is_array($val)) {
         $val = implode(', ', $val);
       }
-      $options[$this->t('Query string')]["[%$param]"] = strip_tags(String::decodeEntities($val));
+      $options[$this->t('Query string')]["[%$param]"] = strip_tags(Html::decodeEntities($val));
     }
 
     $this->documentSelfTokens($options[$this->t('Fields')]);

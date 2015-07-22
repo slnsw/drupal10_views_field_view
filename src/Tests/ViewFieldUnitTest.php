@@ -7,7 +7,7 @@
 
 namespace Drupal\views_field_view\Tests;
 
-use Drupal\Component\Utility\String;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\views\Tests\ViewUnitTestBase;
 use Drupal\views\Tests\ViewTestData;
 use Drupal\views\Views;
@@ -119,7 +119,7 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
       // @todo Test the last_render % output.
       foreach ($map as $token => $value) {
         $processed_value = $view->field['view']->getTokenValue($token, $values, $view);
-        $this->assertIdentical($value, $processed_value, String::format('Expected @token token output', array('@token' => $token)));
+        $this->assertIdentical($value, $processed_value, SafeMarkup::format('Expected @token token output', array('@token' => $token)));
       }
     }
   }
