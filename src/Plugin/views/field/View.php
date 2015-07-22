@@ -97,7 +97,7 @@ class View extends FieldPluginBase {
   public function buildOptionsForm(&$form, FormStateInterface $form_state) {
     parent::buildOptionsForm($form, $form_state);
 
-    $view_options = Views::getViewsAsOptions(TRUE);
+    $view_options = Views::getViewsAsOptions(TRUE, 'all', NULL, FALSE, TRUE);
 
     $form['views_field_view'] = array(
       '#type' => 'details',
