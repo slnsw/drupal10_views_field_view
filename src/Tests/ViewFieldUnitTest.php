@@ -7,8 +7,8 @@
 
 namespace Drupal\views_field_view\Tests;
 
-use Drupal\Component\Utility\SafeMarkup;
-use Drupal\views\Tests\ViewUnitTestBase;
+use Drupal\Component\Render\FormattableMarkup;
+use Drupal\views\Tests\ViewKernelTestBase;
 use Drupal\views\Tests\ViewTestData;
 use Drupal\views\Views;
 use Drupal\views_field_view\Plugin\views\field\View as ViewField;
@@ -18,7 +18,7 @@ use Drupal\views_field_view\Plugin\views\field\View as ViewField;
  *
  * @group views_field_view
  */
-class ViewFieldUnitTest extends ViewUnitTestBase {
+class ViewFieldUnitTest extends ViewKernelTestBase {
 
   /**
    * Modules to enable.
@@ -51,7 +51,7 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
     foreach ($parent_view->result as $index => $values) {
       $name = $parent_view->style_plugin->getField($index, 'name');
       $child_view_field = $parent_view->style_plugin->getField($index, 'view');
-      $this->assertContains($name, $child_view_field);
+      $this->assertContains((string) $name, (string) $child_view_field);
     }
 
     // Sadly it's impossible to check the actual result of the child view, because the object is not saved.
@@ -119,7 +119,7 @@ class ViewFieldUnitTest extends ViewUnitTestBase {
       // @todo Test the last_render % output.
       foreach ($map as $token => $value) {
         $processed_value = $view->field['view']->getTokenValue($token, $values, $view);
-        $this->assertIdentical($value, $processed_value, SafeMarkup::format('Expected @token token output', array('@token' => $token)));
+        $this->assertIdentical($value, $processed_value, (new FormattableMarkup('Expected @token token output', array('@token' => $token)))->__toString());
       }
     }
   }
