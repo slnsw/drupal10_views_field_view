@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
+use Drupal\views\ViewExecutable;
 use Drupal\views\Views;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -294,14 +295,14 @@ class View extends FieldPluginBase {
    *  The token string. E.g. explode(',', $this->options['args']);
    * @param \Drupal\views\ResultRow $values
    *  The values retrieved from a single row of a view's query result.
-   * @param View $view
+   * @param \Drupal\views\ViewExecutable $view
    *  The full view object to get token values from.
    *
    * @return array
    *  An array of raw argument values, returned in the same order as the token
    *  were passed in.
    */
-  public function getTokenValue($token, ResultRow $values, $view) {
+  public function getTokenValue($token, ResultRow $values, ViewExecutable $view) {
     $token_info = $this->getTokenArgument($token);
     $arg = $token_info['arg'];
     $token_type = $token_info['type'];
