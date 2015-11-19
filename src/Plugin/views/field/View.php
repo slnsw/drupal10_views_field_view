@@ -341,12 +341,11 @@ class View extends FieldPluginBase {
    */
   public function getTokenArgument($token) {
     // Trim whitespace and remove the brackets around the token.
-    $argument = trim(str_replace(['{{', '}}'], ['', ''], $token));
-    list($type, $id) = explode('.', $argument);
+    preg_match('{{\s?(?<type>[a-z_]+)\.(?<id>[a-z_]+)\s?}}', $token, $match);
 
     return [
-      'type' => $type,
-      'id' => $id,
+      'type' => $match['type'],
+      'id' => $match['id'],
     ];
   }
 
