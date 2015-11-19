@@ -416,7 +416,7 @@ class View extends FieldPluginBase {
     }
 
     // Add replacements for query string parameters.
-    foreach ($_GET as $param => $val) {
+    foreach ($this->view->getRequest()->query->all() as $param => $val) {
       if (is_array($val)) {
         $val = implode(', ', $val);
       }
