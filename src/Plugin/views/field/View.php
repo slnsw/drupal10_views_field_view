@@ -415,14 +415,6 @@ class View extends FieldPluginBase {
       $options[(string) $this->t('Arguments')]['!' . $count] = $this->t('@argument input', ['@argument' => $handler->adminLabel()]);
     }
 
-    // Add replacements for query string parameters.
-    foreach ($this->view->getRequest()->query->all() as $param => $val) {
-      if (is_array($val)) {
-        $val = implode(', ', $val);
-      }
-      $options[(string) $this->t('Query string')]["[%$param]"] = strip_tags(Html::decodeEntities($val));
-    }
-
     $this->documentSelfTokens($options[(string) $this->t('Fields')]);
 
     // We have some options, so make a list.
