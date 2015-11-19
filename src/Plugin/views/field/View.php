@@ -399,8 +399,8 @@ class View extends FieldPluginBase {
     $options = [];
 
     foreach ($this->view->display_handler->getHandlers('field') as $field => $handler) {
-      $options[$this->t('Fields')]["[!$field]"] = $handler->adminLabel() . ' (' . $this->t('raw') . ')';
-      $options[$this->t('Fields')]["[%$field]"] = $handler->adminLabel() . ' (' . $this->t('rendered') . ')';
+      $options[(string) $this->t('Fields')]["[!$field]"] = $handler->adminLabel() . ' (' . $this->t('raw') . ')';
+      $options[(string) $this->t('Fields')]["[%$field]"] = $handler->adminLabel() . ' (' . $this->t('rendered') . ')';
       // We only use fields up to (and including) this one.
       if ($field == $this->options['id']) {
         break;
@@ -411,8 +411,8 @@ class View extends FieldPluginBase {
     $count = 0;
 
     foreach ($this->view->display_handler->getHandlers('argument') as $arg => $handler) {
-      $options[$this->t('Arguments')]['%' . ++$count] = $this->t('@argument title', ['@argument' => $handler->adminLabel()]);
-      $options[$this->t('Arguments')]['!' . $count] = $this->t('@argument input', ['@argument' => $handler->adminLabel()]);
+      $options[(string) $this->t('Arguments')]['%' . ++$count] = $this->t('@argument title', ['@argument' => $handler->adminLabel()]);
+      $options[(string) $this->t('Arguments')]['!' . $count] = $this->t('@argument input', ['@argument' => $handler->adminLabel()]);
     }
 
     // Add replacements for query string parameters.
@@ -420,10 +420,10 @@ class View extends FieldPluginBase {
       if (is_array($val)) {
         $val = implode(', ', $val);
       }
-      $options[$this->t('Query string')]["[%$param]"] = strip_tags(Html::decodeEntities($val));
+      $options[(string) $this->t('Query string')]["[%$param]"] = strip_tags(Html::decodeEntities($val));
     }
 
-    $this->documentSelfTokens($options[$this->t('Fields')]);
+    $this->documentSelfTokens($options[(string) $this->t('Fields')]);
 
     // We have some options, so make a list.
     if (!empty($options)) {
