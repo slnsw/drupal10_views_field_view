@@ -43,15 +43,16 @@ class ViewFieldUITest extends UITestBase {
     $this->clickLink('Global: View (View)');
 
     $result = $this->cssSelect('details#edit-options-available-tokens div.item-list li');
-    debug($result);
-    $this->assertEqual(6, count($result));
+    $this->assertEqual(8, count($result));
 
-    $this->assertEqual('[!id] == Views test: ID (raw)', (string) $result[0]);
-    $this->assertEqual('[%id] == Views test: ID (rendered)', (string) $result[1]);
-    $this->assertEqual('[!name] == Views test: Name (raw)', (string) $result[2]);
-    $this->assertEqual('[%name] == Views test: Name (rendered)', (string) $result[3]);
-    $this->assertEqual('[!view] == Global: View (raw)', (string) $result[4]);
-    $this->assertEqual('[%view] == Global: View (rendered)', (string) $result[5]);
+    $this->assertEqual('{{ raw_fields.id }} == Views test: ID (raw)', (string) $result[0]);
+    $this->assertEqual('{{ fields.id }} == Views test: ID (rendered)', (string) $result[1]);
+    $this->assertEqual('{{ raw_fields.name }} == Views test: Name (raw)', (string) $result[2]);
+    $this->assertEqual('{{ fields.name }} == Views test: Name (rendered)', (string) $result[3]);
+    $this->assertEqual('{{ raw_fields.view }} == Global: View (raw)', (string) $result[4]);
+    $this->assertEqual('{{ fields.view }} == Global: View (rendered)', (string) $result[5]);
+    $this->assertEqual('{{ arguments.null }} == Global: Null title', (string) $result[6]);
+    $this->assertEqual('{{ raw_arguments.null }} == Global: Null input', (string) $result[7]);
   }
 
 }

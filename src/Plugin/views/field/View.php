@@ -396,29 +396,28 @@ class View extends FieldPluginBase {
 
     // We have some options, so make a list.
     if (!empty($options)) {
-
+      $items = [];
       foreach (array_keys($options) as $type) {
         if (!empty($options[$type])) {
-          $items = [];
           foreach ($options[$type] as $key => $value) {
             $items[] = $key . ' == ' . $value;
           }
-          $output = [
-            '#theme' => 'item_list',
-            '#items' => $items,
-            '#type' => $type,
-            '#prefix' => '<p>' . $this->t('The following tokens are available
+        }
+      }
+      $output = [
+        '#theme' => 'item_list',
+        '#items' => $items,
+        '#type' => $type,
+        '#prefix' => '<p>' . $this->t('The following tokens are available
               for this field. Note that due to rendering order, you cannot use
               fields that come after this field; if you need a field that is not
               listed here, re-arrange  your fields.') . '</p>',
-            '#suffix' => '<p><em>' . $this->t('Using rendered tokens ("fields" / "arguments") can
+        '#suffix' => '<p><em>' . $this->t('Using rendered tokens ("fields" / "arguments") can
               cause unexpected behaviour, as this will use the last output of
               the field. This could be re written output also. If no prefix is
               used in the token pattern, "raw_fields" / "raw_arguments" will be used as a default.') .
-              '</em></p>',
-          ];
-        }
-      }
+          '</em></p>',
+      ];
     }
     else {
       $output = [

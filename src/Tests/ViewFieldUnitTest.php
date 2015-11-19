@@ -44,7 +44,7 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
   /**
    * Test normal view embedding.
    */
-  public function ptestNormalView() {
+  public function testNormalView() {
     $parent_view = Views::getView('views_field_view_test_parent_normal');
     $parent_view->preview();
 
@@ -100,36 +100,6 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
 
     $result = $field_handler->getTokenValue('{{ arguments.null }}', $view->result[0], $view);
     $this->assertEqual('Hey jude', $result);
-
-    return;
-  }
-
-  /**
-   * Test token replacements.
-   */
-  public function ptestTokenReplacement() {
-    // Test the token values from a view.
-    $view = Views::getView('views_field_view_test_parent_normal');
-    $this->executeView($view);
-
-    // Add a value to args, just for the purpose of the !1 token to get a value
-    // from but not affecting the query.
-    $view->args = [5];
-
-    // Test all the results.
-    foreach ($view->result as $values) {
-      $map = [
-        '[!name]' => $values->views_test_data_name,
-        '[name]' => $values->views_test_data_name,
-        '!1' => 5,
-        'static' => 'static',
-      ];
-      // @todo Test the last_render % output.
-      foreach ($map as $token => $value) {
-        $processed_value = $view->field['view']->getTokenValue($token, $values, $view);
-        $this->assertIdentical($value, $processed_value, (new FormattableMarkup('Expected @token token output', ['@token' => $token]))->__toString());
-      }
-    }
   }
 
   /**
