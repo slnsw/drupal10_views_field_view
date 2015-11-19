@@ -72,27 +72,27 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
 
     // Test the split_tokens() method.
     $result = $field_handler->splitTokens('[!uid],[%nid]');
-    $expected = array('[!uid]', '[%nid]');
+    $expected = ['[!uid]', '[%nid]'];
     $this->assertEqual($result, $expected, 'The token string has been split correctly (",").');
 
     $result = $field_handler->splitTokens('[!uid]/[%nid]');
     $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
 
     $result = $field_handler->splitTokens('[uid]/[nid]');
-    $expected = array('[uid]', '[nid]');
+    $expected = ['[uid]', '[nid]'];
     $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
 
     // Test the get_token_argument() method.
     $result = $field_handler->getTokenArgument('[!uid]');
-    $expected = array('type' => '!', 'arg' => 'uid');
+    $expected = ['type' => '!', 'arg' => 'uid'];
     $this->assertEqual($result, $expected, 'Correct token argument info processed ("!").');
 
     $result = $field_handler->getTokenArgument('[%uid]');
-    $expected = array('type' => '%', 'arg' => 'uid');
+    $expected = ['type' => '%', 'arg' => 'uid'];
     $this->assertEqual($result, $expected, 'Correct token argument info processed ("%").');
 
     $result = $field_handler->getTokenArgument('[uid]');
-    $expected = array('type' => '', 'arg' => 'uid');
+    $expected = ['type' => '', 'arg' => 'uid'];
     $this->assertEqual($result, $expected, 'Correct token argument info processed.');
   }
 
