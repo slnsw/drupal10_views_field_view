@@ -304,42 +304,26 @@ class View extends FieldPluginBase {
    */
   public function getTokenValue($token, ResultRow $values, ViewExecutable $view) {
     $token_info = $this->getTokenArgument($token);
-    $arg = $token_info['arg'];
+    $id = $token_info['id'];
     $token_type = $token_info['type'];
 
     // Collect all of the values that we intend to use as arguments of our
     // single query.
-    if (isset($view->field[$arg])) {
-      switch ($token_type) {
-        case '%':
-          $value = $view->field[$arg]->last_render;
-          break;
-
-        case '!':
-        default:
-          $value = $view->field[$arg]->getValue($values);
-          break;
-
-      }
-    }
-    elseif (isset($view->args[$arg - 1])) {
-      switch ($token_type) {
-        case '%':
-          // Get an array of argument keys. So we can use the index as an
-          // identifier.
-          $keys = array_keys($view->argument);
-          $value = $view->argument[$keys[$arg - 1]]->getTitle();
-          break;
-
-        case '!':
-        default:
-          $value = $view->args[$arg - 1];
-          break;
-
-      }
-    }
-    else {
-      $value = Html::escape(trim($token, '\'"'));
+    switch ($token_type) {
+      case 'raw_fields':
+        $value = $view->field[$id]->getValue($values);
+        break;
+      case 'fields':
+        $value = $view->field[$id]->last_render;
+        break;
+      case 'raw_arguments':
+        $value = $view->args[array_flip(array_keys($view->argument))[$id]];
+        break;
+      case 'arguments':
+        $value = $view->argument[$id]->getTitle();
+        break;
+      default:
+        $value = Html::escape(trim($token, '\'"'));
     }
 
     return $value;
@@ -347,7 +331,7 @@ class View extends FieldPluginBase {
 
   /**
    * Return the argument type and raw argument from a token.
-   * E.g. [!test_token] will return "array('type' => '!', 'arg' => test_token)".
+   * E.g. {{ raw_arguments.null }} will return "array('type' => 'raw_arguments', 'id' => null)".
    *
    * @param string $token
    *  A single token string.
@@ -357,19 +341,12 @@ class View extends FieldPluginBase {
    */
   public function getTokenArgument($token) {
     // Trim whitespace and remove the brackets around the token.
-    $argument = trim(trim($token), '[]');
-    $diff = ltrim($argument, '!..%');
-    $token_type = '';
-
-    if ($argument != $diff) {
-      $token_type = $argument[0];
-      // Make the new argument the diff (without token type character).
-      $argument = $diff;
-    }
+    $argument = trim(str_replace(['{{', '}}'], ['', ''], $token));
+    list($type, $id) = explode('.', $argument);
 
     return [
-      'type' => $token_type,
-      'arg' => $argument,
+      'type' => $type,
+      'id' => $id,
     ];
   }
 

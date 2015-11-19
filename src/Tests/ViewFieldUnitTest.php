@@ -75,34 +75,30 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
     $this->assertTrue($field_handler instanceof ViewField);
 
     // Test the split_tokens() method.
-    $result = $field_handler->splitTokens('[!uid],[%nid]');
-    $expected = ['[!uid]', '[%nid]'];
+    $result = $field_handler->splitTokens('{{ raw_fields.uid }},{{ fields.nid }}');
+    $expected = ['{{ raw_fields.uid }}', '{{ fields.nid }}'];
     $this->assertEqual($result, $expected, 'The token string has been split correctly (",").');
 
-    $result = $field_handler->splitTokens('[!uid]/[%nid]');
-    $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
-
-    $result = $field_handler->splitTokens('[uid]/[nid]');
-    $expected = ['[uid]', '[nid]'];
+    $result = $field_handler->splitTokens('{{ raw_fields.uid }}/{{ fields.nid }}');
     $this->assertEqual($result, $expected, 'The token string has been split correctly ("/").');
 
     // Test the get_token_argument() method.
-    $result = $field_handler->getTokenValue('[!id]', $view->result[0], $view);
+    $result = $field_handler->getTokenValue('{{ raw_fields.id }}', $view->result[0], $view);
     $this->assertEqual(2, $result);
 
-    $result = $field_handler->getTokenValue('[%id]', $view->result[0], $view);
+    $result = $field_handler->getTokenValue('{{ fields.id }}', $view->result[0], $view);
     $this->assertEqual(3, $result);
 
-    $result = $field_handler->getTokenValue('[!name]', $view->result[0], $view);
+    $result = $field_handler->getTokenValue('{{ raw_fields.name }}', $view->result[0], $view);
     $this->assertEqual('George', $result);
 
-    $result = $field_handler->getTokenValue('[%name]', $view->result[0], $view);
+    $result = $field_handler->getTokenValue('{{ fields.name }}', $view->result[0], $view);
     $this->assertEqual('Ringo', $result);
 
-    $result = $field_handler->getTokenValue('!1', $view->result[0], $view);
+    $result = $field_handler->getTokenValue('{{ raw_arguments.null }}', $view->result[0], $view);
     $this->assertEqual('Hey jude', $result);
 
-    $result = $field_handler->getTokenValue('%1', $view->result[0], $view);
+    $result = $field_handler->getTokenValue('{{ arguments.null }}', $view->result[0], $view);
     $this->assertEqual('Hey jude', $result);
 
     return;
