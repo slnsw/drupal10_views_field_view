@@ -399,8 +399,8 @@ class View extends FieldPluginBase {
     $options = [];
 
     foreach ($this->view->display_handler->getHandlers('field') as $field => $handler) {
-      $options[(string) $this->t('Fields')]["[!$field]"] = $handler->adminLabel() . ' (' . $this->t('raw') . ')';
-      $options[(string) $this->t('Fields')]["[%$field]"] = $handler->adminLabel() . ' (' . $this->t('rendered') . ')';
+      $options[(string) $this->t('Fields')]["{{ raw_fields.$field }}"] = $handler->adminLabel() . ' (' . $this->t('raw') . ')';
+      $options[(string) $this->t('Fields')]["{{ fields.$field }}"] = $handler->adminLabel() . ' (' . $this->t('rendered') . ')';
       // We only use fields up to (and including) this one.
       if ($field == $this->options['id']) {
         break;
@@ -410,9 +410,9 @@ class View extends FieldPluginBase {
     // This lets us prepare the key as we want it printed.
     $count = 0;
 
-    foreach ($this->view->display_handler->getHandlers('argument') as $arg => $handler) {
-      $options[(string) $this->t('Arguments')]['%' . ++$count] = $this->t('@argument title', ['@argument' => $handler->adminLabel()]);
-      $options[(string) $this->t('Arguments')]['!' . $count] = $this->t('@argument input', ['@argument' => $handler->adminLabel()]);
+    foreach ($this->view->display_handler->getHandlers('argument') as $id => $handler) {
+      $options[(string) $this->t('Arguments')]["{{ arguments.$id }}"] = $this->t('@argument title', ['@argument' => $handler->adminLabel()]);
+      $options[(string) $this->t('Arguments')]["{{ raw_arguments.$id }}"] = $this->t('@argument input', ['@argument' => $handler->adminLabel()]);
     }
 
     $this->documentSelfTokens($options[(string) $this->t('Fields')]);
@@ -434,10 +434,10 @@ class View extends FieldPluginBase {
               for this field. Note that due to rendering order, you cannot use
               fields that come after this field; if you need a field that is not
               listed here, re-arrange  your fields.') . '</p>',
-            '#suffix' => '<p><em>' . $this->t('Using rendered (%) tokens can
+            '#suffix' => '<p><em>' . $this->t('Using rendered tokens ("fields" / "arguments") can
               cause unexpected behaviour, as this will use the last output of
               the field. This could be re written output also. If no prefix is
-              used in the token pattern, "!" will be used as a default.') .
+              used in the token pattern, "raw_fields" / "raw_arguments" will be used as a default.') .
               '</em></p>',
           ];
         }
