@@ -84,9 +84,9 @@ class View extends FieldPluginBase {
    */
   protected function defineOptions() {
     $options = parent::defineOptions();
-    $options['view'] = array('default' => '');
-    $options['display'] = array('default' => 'default');
-    $options['arguments'] = array('default' => '');
+    $options['view'] = ['default' => ''];
+    $options['display'] = ['default' => 'default'];
+    $options['arguments'] = ['default' => ''];
 
     return $options;
   }
@@ -99,25 +99,25 @@ class View extends FieldPluginBase {
 
     $view_options = Views::getViewsAsOptions(TRUE, 'all', NULL, FALSE, TRUE);
 
-    $form['views_field_view'] = array(
+    $form['views_field_view'] = [
       '#type' => 'details',
       '#title' => $this->t("View settings"),
       '#open' => TRUE,
-    );
+    ];
 
-    $form['view'] = array(
+    $form['view'] = [
       '#type' => 'select',
       '#title' => $this->t('View'),
       '#description' => $this->t('Select a view to embed.'),
       '#default_value' => $this->options['view'],
       '#options' => $view_options,
-      '#ajax' => array(
+      '#ajax' => [
         'path' => views_ui_build_form_url($form_state),
-      ),
-      '#submit' => array(array($this, 'submitTemporaryForm')),
+      ],
+      '#submit' => [[$this, 'submitTemporaryForm']],
       '#executes_submit_callback' => TRUE,
       '#fieldset' => 'views_field_view',
-    );
+    ];
 
     // If there is no view set, use the first one for now.
     if (count($view_options) && empty($this->options['view'])) {
@@ -128,7 +128,7 @@ class View extends FieldPluginBase {
     if ($this->options['view']) {
       $view = Views::getView($this->options['view']);
 
-      $display_options = array();
+      $display_options = [];
       foreach ($view->storage->get('display') as $name => $display) {
         // Allow to embed a different display as the current one.
         if ($this->options['view'] != $this->view->storage->id() || ($this->view->current_display != $name)) {
@@ -136,56 +136,56 @@ class View extends FieldPluginBase {
         }
       }
 
-      $form['display'] = array(
+      $form['display'] = [
         '#type' => 'select',
         '#title' => $this->t('Display'),
         '#description' => $this->t('Select a view display to use.'),
         '#default_value' => $this->options['display'],
         '#options' => $display_options,
-        '#ajax' => array(
+        '#ajax' => [
           'path' => views_ui_build_form_url($form_state),
-        ),
-        '#submit' => array(array($this, 'submitTemporaryForm')),
+        ],
+        '#submit' => [[$this, 'submitTemporaryForm']],
         '#executes_submit_callback' => TRUE,
         '#fieldset' => 'views_field_view',
-      );
+      ];
 
       // Provide a way to directly access the views edit link of the child view.
       // Don't show this link if the current view is the selected child view.
       if (!empty($this->options['view']) && !empty($this->options['display']) && ($this->view->storage->id() != $this->options['view'])) {
         // use t() here, and set HTML on #link options.
-        $link_text = $this->t('Edit "%view (@display)" view', array('%view' => $view_options[$this->options['view']], '@display' => $this->options['display']));
-        $form['view_edit'] = array(
+        $link_text = $this->t('Edit "%view (@display)" view', ['%view' => $view_options[$this->options['view']], '@display' => $this->options['display']]);
+        $form['view_edit'] = [
           '#type' => 'container',
           '#fieldset' => 'views_field_view',
-        );
-        $form['view_edit']['view_edit_link'] = array(
+        ];
+        $form['view_edit']['view_edit_link'] = [
           '#type' => 'link',
           '#title' => $link_text,
-          '#url' => Url::fromRoute('entity.view.edit_display_form', array(
+          '#url' => Url::fromRoute('entity.view.edit_display_form', [
             'view' => $this->options['view'],
             'display_id' => $this->options['display'],
-          ), array(
-            'attributes' => array(
+          ], [
+            'attributes' => [
               'target' => '_blank',
-              'class' => array('views-field-view-child-view-edit'),
-            ),
+              'class' => ['views-field-view-child-view-edit'],
+            ],
             'html' => TRUE,
-          )),
-          '#attached' => array(
-            'library' => array('views_field_view/drupal.views_field_view'),
-          ),
+          ]),
+          '#attached' => [
+            'library' => ['views_field_view/drupal.views_field_view'],
+          ],
           '#prefix' => '<span>[</span>',
           '#suffix' => '<span>]</span>',
-        );
-        $form['view_edit']['description'] = array(
+        ];
+        $form['view_edit']['description'] = [
           '#markup' => $this->t('Use this link to open the current child view\'s edit page in a new window.'),
           '#prefix' => '<div class="description">',
           '#suffix' => '</div>',
-        );
+        ];
       }
 
-      $form['arguments'] = array(
+      $form['arguments'] = [
         '#title' => $this->t('Contextual filters'),
         '#description' => $this->t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view.
           See below list of available replacement tokens. Static values are also be passed to child views if they do not match a token format.
@@ -193,13 +193,13 @@ class View extends FieldPluginBase {
         '#type' => 'textfield',
         '#default_value' => $this->options['arguments'],
         '#fieldset' => 'views_field_view',
-      );
-      $form['available_tokens'] = array(
+      ];
+      $form['available_tokens'] = [
         '#type' => 'details',
         '#title' => $this->t('Replacement patterns'),
         '#value' => $this->getTokenInfo(),
         '#fieldset' => 'views_field_view',
-      );
+      ];
     }
 
     $form['alter']['#access'] = FALSE;
@@ -218,13 +218,13 @@ class View extends FieldPluginBase {
   public function render(ResultRow $values) {
     $output = NULL;
 
-    static $running = array();
+    static $running = [];
     // Protect against the evil / recursion.
     // Set the variable for yourself, this is not for the normal "user".
     if (empty($running[$this->options['view']][$this->options['display']]) || $this->config->get('evil')) {
       if (!empty($this->options['view'])) {
         $running[$this->options['view']][$this->options['display']] = TRUE;
-        $args = array();
+        $args = [];
 
         // Only perform this loop if there are actually arguments present.
         if (!empty($this->options['arguments'])) {
@@ -367,10 +367,10 @@ class View extends FieldPluginBase {
       $argument = $diff;
     }
 
-    return array(
+    return [
       'type' => $token_type,
       'arg' => $argument,
-    );
+    ];
   }
 
   /**
@@ -394,9 +394,9 @@ class View extends FieldPluginBase {
    *   A full HTML string, containing a list of available tokens.
    */
   public function getTokenInfo() {
-    $output = array();
+    $output = [];
     // Get a list of the available fields and arguments for token replacement.
-    $options = array();
+    $options = [];
 
     foreach ($this->view->display_handler->getHandlers('field') as $field => $handler) {
       $options[$this->t('Fields')]["[!$field]"] = $handler->adminLabel() . ' (' . $this->t('raw') . ')';
@@ -411,8 +411,8 @@ class View extends FieldPluginBase {
     $count = 0;
 
     foreach ($this->view->display_handler->getHandlers('argument') as $arg => $handler) {
-      $options[$this->t('Arguments')]['%' . ++$count] = $this->t('@argument title', array('@argument' => $handler->adminLabel()));
-      $options[$this->t('Arguments')]['!' . $count] = $this->t('@argument input', array('@argument' => $handler->adminLabel()));
+      $options[$this->t('Arguments')]['%' . ++$count] = $this->t('@argument title', ['@argument' => $handler->adminLabel()]);
+      $options[$this->t('Arguments')]['!' . $count] = $this->t('@argument input', ['@argument' => $handler->adminLabel()]);
     }
 
     // Add replacements for query string parameters.
@@ -430,11 +430,11 @@ class View extends FieldPluginBase {
 
       foreach (array_keys($options) as $type) {
         if (!empty($options[$type])) {
-          $items = array();
+          $items = [];
           foreach ($options[$type] as $key => $value) {
             $items[] = $key . ' == ' . $value;
           }
-          $output = array(
+          $output = [
             '#theme' => 'item_list',
             '#items' => $items,
             '#type' => $type,
@@ -447,18 +447,18 @@ class View extends FieldPluginBase {
               the field. This could be re written output also. If no prefix is
               used in the token pattern, "!" will be used as a default.') .
               '</em></p>',
-          );
+          ];
         }
       }
     }
     else {
-      $output = array(
+      $output = [
         '#markup' => '<p>' . $this->t('You must add some additional fields to
           this display before using this field. These fields may be marked as
           <em>Exclude from display</em> if you prefer. Note that due to
           rendering order,you cannot use fields that come after this field; if
           you need a field not listed here, rearrange your fields.') . '</p>',
-      );
+      ];
     }
 
     return $output;

@@ -25,19 +25,19 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
    *
    * @var array
    */
-  public static $modules = array('views_field_view', 'views_field_view_test_config', 'user');
+  public static $modules = ['views_field_view', 'views_field_view_test_config', 'user'];
 
   /**
    * Views to enable.
    *
    * @var array
    */
-  public static $testViews = array('views_field_view_test_parent_normal', 'views_field_view_test_child_normal');
+  public static $testViews = ['views_field_view_test_parent_normal', 'views_field_view_test_child_normal'];
 
   protected function setUp() {
     parent::setUp();
 
-    ViewTestData::createTestViews(get_class($this), array('views_field_view_test_config'));
+    ViewTestData::createTestViews(get_class($this), ['views_field_view_test_config']);
   }
 
   /**
@@ -61,10 +61,10 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
    * Test field handler methods in a unit test like way.
    */
   public function testFieldHandlerMethods() {
-    $item = array(
+    $item = [
       'table' => 'views',
       'field' => 'view',
-    );
+    ];
     /** @var ViewField $field_handler */
     $field_handler = $this->container->get('plugin.manager.views.field')->getHandler($item);
 
@@ -106,20 +106,20 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
 
     // Add a value to args, just for the purpose of the !1 token to get a value
     // from but not affecting the query.
-    $view->args = array(5);
+    $view->args = [5];
 
     // Test all the results.
     foreach ($view->result as $values) {
-      $map = array(
+      $map = [
         '[!name]' => $values->views_test_data_name,
         '[name]' => $values->views_test_data_name,
         '!1' => 5,
         'static' => 'static',
-      );
+      ];
       // @todo Test the last_render % output.
       foreach ($map as $token => $value) {
         $processed_value = $view->field['view']->getTokenValue($token, $values, $view);
-        $this->assertIdentical($value, $processed_value, (new FormattableMarkup('Expected @token token output', array('@token' => $token)))->__toString());
+        $this->assertIdentical($value, $processed_value, (new FormattableMarkup('Expected @token token output', ['@token' => $token]))->__toString());
       }
     }
   }
@@ -139,7 +139,7 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
    * @return bool TRUE if the assertion succeeded, FALSE otherwise.
    */
   protected function assertContains($first, $second, $message = '', $group = 'Other') {
-    return $this->assert(strpos($second, $first) !== FALSE, $message ? $message : t('Value @second contains value @first.', array('@first' => var_export($first, TRUE), '@second' => var_export($second, TRUE))), $group);
+    return $this->assert(strpos($second, $first) !== FALSE, $message ? $message : t('Value @second contains value @first.', ['@first' => var_export($first, TRUE), '@second' => var_export($second, TRUE)]), $group);
   }
 
 }
