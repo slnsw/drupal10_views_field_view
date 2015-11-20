@@ -187,7 +187,7 @@ class View extends FieldPluginBase {
 
       $form['arguments'] = [
         '#title' => $this->t('Contextual filters'),
-        '#description' => $this->t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwared to the view.
+        '#description' => $this->t('Use a comma (,) or forwardslash (/) separated list of each contextual filter which should be forwarded to the view.
           See below list of available replacement tokens. Static values are also be passed to child views if they do not match a token format.
           You could pass static ID\'s or taxonomy terms in this way. E.g. 123 or "my taxonomy term".'),
         '#type' => 'textfield',
