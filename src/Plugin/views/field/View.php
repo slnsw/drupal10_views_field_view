@@ -341,7 +341,7 @@ class View extends FieldPluginBase {
    */
   protected function getTokenArgument($token) {
     // Trim whitespace and remove the brackets around the token.
-    preg_match('{{\s?(?<type>[a-z_]+)\.(?<id>[a-z_]+)\s?}}', $token, $match);
+    preg_match('{{\s?(?<type>[a-z_0-9]+)\.(?<id>[a-z_0-9]+)\s?}}', $token, $match);
 
     return [
       'type' => $match['type'],

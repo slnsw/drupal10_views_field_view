@@ -89,6 +89,12 @@ class ViewFieldUnitTest extends ViewKernelTestBase {
     $result = $field_handler->getTokenValue('{{ fields.id }}', $view->result[0], $view);
     $this->assertEqual(3, $result);
 
+    $result = $field_handler->getTokenValue('{{ raw_fields.id_1 }}', $view->result[0], $view);
+    $this->assertEqual(2, $result);
+
+    $result = $field_handler->getTokenValue('{{ fields.id_1 }}', $view->result[0], $view);
+    $this->assertEqual(3, $result);
+
     $result = $field_handler->getTokenValue('{{ raw_fields.name }}', $view->result[0], $view);
     $this->assertEqual('George', $result);
 
