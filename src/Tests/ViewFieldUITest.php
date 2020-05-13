@@ -2,8 +2,8 @@
 
 namespace Drupal\views_field_view\Tests;
 
+use Drupal\Tests\views_ui\Functional\UITestBase;
 use Drupal\views\Tests\ViewTestData;
-use Drupal\views_ui\Tests\UITestBase;
 
 /**
  * Tests the UI of views_field_view.
@@ -38,8 +38,8 @@ class ViewFieldUITest extends UITestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
-    parent::setUp();
+  protected function setUp($import_test_views = TRUE) {
+    parent::setUp($import_test_views = TRUE);
 
     ViewTestData::createTestViews(get_class($this), ['views_field_view_test_config']);
   }
@@ -54,16 +54,16 @@ class ViewFieldUITest extends UITestBase {
     $result = $this->cssSelect('details#edit-options-available-tokens div.item-list li');
     $this->assertEqual(10, count($result));
 
-    $this->assertEqual('{{ raw_fields.id }} == Views test: ID (raw)', (string) $result[0]);
-    $this->assertEqual('{{ fields.id }} == Views test: ID (rendered)', (string) $result[1]);
-    $this->assertEqual('{{ raw_fields.id_1 }} == Views test: ID (raw)', (string) $result[2]);
-    $this->assertEqual('{{ fields.id_1 }} == Views test: ID (rendered)', (string) $result[3]);
-    $this->assertEqual('{{ raw_fields.name }} == Views test: Name (raw)', (string) $result[4]);
-    $this->assertEqual('{{ fields.name }} == Views test: Name (rendered)', (string) $result[5]);
-    $this->assertEqual('{{ raw_fields.view }} == Global: View (raw)', (string) $result[6]);
-    $this->assertEqual('{{ fields.view }} == Global: View (rendered)', (string) $result[7]);
-    $this->assertEqual('{{ arguments.null }} == Global: Null title', (string) $result[8]);
-    $this->assertEqual('{{ raw_arguments.null }} == Global: Null input', (string) $result[9]);
+    $this->assertEqual('{{ raw_fields.id }} == Views test: ID (raw)', $result[0]->getText());
+    $this->assertEqual('{{ fields.id }} == Views test: ID (rendered)', $result[1]->getText());
+    $this->assertEqual('{{ raw_fields.id_1 }} == Views test: ID (raw)', $result[2]->getText());
+    $this->assertEqual('{{ fields.id_1 }} == Views test: ID (rendered)', $result[3]->getText());
+    $this->assertEqual('{{ raw_fields.name }} == Views test: Name (raw)', $result[4]->getText());
+    $this->assertEqual('{{ fields.name }} == Views test: Name (rendered)', $result[5]->getText());
+    $this->assertEqual('{{ raw_fields.view }} == Global: View (raw)', $result[6]->getText());
+    $this->assertEqual('{{ fields.view }} == Global: View (rendered)', $result[7]->getText());
+    $this->assertEqual('{{ arguments.null }} == Global: Null title', $result[8]->getText());
+    $this->assertEqual('{{ raw_arguments.null }} == Global: Null input', $result[9]->getText());
   }
 
 }
