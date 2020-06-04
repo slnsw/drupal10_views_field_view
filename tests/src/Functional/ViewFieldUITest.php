@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\views_field_view\Tests;
+namespace Drupal\Tests\views_field_view\Functional;
 
 use Drupal\Tests\views_ui\Functional\UITestBase;
 use Drupal\views\Tests\ViewTestData;
@@ -10,9 +10,14 @@ use Drupal\views\Tests\ViewTestData;
  *
  * @see \Drupal\views_field_view\Plugin\views\field\View
  *
- * @group views_ui
+ * @group views_field_view
  */
 class ViewFieldUITest extends UITestBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'classy';
 
   /**
    * Modules to enable.

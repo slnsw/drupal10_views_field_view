@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\views_field_view\Tests;
+namespace Drupal\Tests\views_field_view\Kernel;
 
 use Drupal\Tests\views\Kernel\ViewsKernelTestBase;
 use Drupal\views\Tests\ViewTestData;
@@ -55,7 +55,7 @@ class ViewFieldUnitTest extends ViewsKernelTestBase {
     foreach ($parent_view->result as $index => $values) {
       $name = $parent_view->style_plugin->getField($index, 'name');
       $child_view_field = $parent_view->style_plugin->getField($index, 'view');
-      $this->assertContains((string) $name, (string) $child_view_field);
+      $this->assertStringContainsString((string) $name, (string) $child_view_field);
     }
 
     // It's impossible to check the actual result of the child view, because the
@@ -73,7 +73,7 @@ class ViewFieldUnitTest extends ViewsKernelTestBase {
     $view->execute();
     $view->style_plugin->render();
 
-    /** @var ViewField $field_handler */
+    /** @var \Drupal\views_field_view\Plugin\views\field\View $field_handler */
     $field_handler = $view->field['view'];
 
     $this->assertTrue($field_handler instanceof ViewField);
