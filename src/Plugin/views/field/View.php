@@ -244,7 +244,7 @@ class View extends FieldPluginBase {
           if ($view->display_handler->isPagerEnabled()) {
             // Check whether the pager IDs should be rewritten.
             $view->initQuery();
-            // Find a proper start value for the ascening pager IDs.
+            // Find a proper start value for the ascending pager IDs.
             $start = 0;
             $pager = $view->display_handler->getOption('pager');
             if (isset($this->query->pager->options['id'])) {
