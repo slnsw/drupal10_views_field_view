@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\views_field_view\Plugin\views\field\View.
- */
-
 namespace Drupal\views_field_view\Plugin\views\field;
 
 use Drupal\Component\Utility\Html;
