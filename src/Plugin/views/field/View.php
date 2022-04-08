@@ -309,7 +309,7 @@ class View extends FieldPluginBase {
         $value = $view->field[$id]->getValue($values);
         break;
       case 'fields':
-        $value = $view->field[$id]->last_render;
+        $value = (string) $view->field[$id]->last_render;
         break;
       case 'raw_arguments':
         $value = $view->args[array_flip(array_keys($view->argument))[$id]];
