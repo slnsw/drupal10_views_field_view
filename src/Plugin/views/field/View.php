@@ -62,9 +62,12 @@ class View extends FieldPluginBase {
 
   /**
    * {@inheritdoc}
+   *
+   * Only allow the field to be there, no other aggregation make sense
    */
-  public function usesGroupBy() {
-    return FALSE;
+  public function buildGroupByForm(&$form, FormStateInterface $form_state) {
+    parent::buildGroupByForm($form, $form_state);
+    $form['group_type']['#options'] = [$form['group_type']['#options']['group']];
   }
 
   /**
