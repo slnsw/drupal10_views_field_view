@@ -1,8 +1,7 @@
 name: 'Views Field View'
 type: module
 description: 'Adds a view field handler to embed views inside views.'
-core: 8.x
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
 package: Views
 dependencies:
   - drupal:views
